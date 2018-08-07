@@ -80,7 +80,7 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             var publishDir = OutputDirectory / "publish";
-            var zipPath = OutputDirectory / "Converter.zip";
+            var zipPath = OutputDirectory / "AVACloud.Client.zip";
 
             DotNetPublish(x => DefaultDotNetPublish
                 .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
