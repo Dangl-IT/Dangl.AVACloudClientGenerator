@@ -90,12 +90,15 @@ class Build : NukeBuild
 
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
+            var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
+
             await PublishRelease(new GitHubReleaseSettings()
                 .SetArtifactPaths(new string[] { zipPath })
                 .SetCommitSha(GitVersion.Sha)
                 .SetRepositoryName(repositoryInfo.repositoryName)
                 .SetRepositoryOwner(repositoryInfo.gitHubOwner)
                 .SetTag(GitVersion.NuGetVersion)
+                .SetPrerelease(isPrerelease)
                 .SetToken(GitHubAuthenticationToken));
         });
 }
