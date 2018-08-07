@@ -29,7 +29,8 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
                 { "developerName", "Dangl IT" },
                 { "developerEmail", "info@dangl-it.com" },
                 { "java8", "true" },
-                { "useGzipFeature", true }
+                { "useGzipFeature", false },
+                { "dateLibrary", "java8" }
             };
         }
     }
