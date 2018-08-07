@@ -10,6 +10,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{B171DCAE-A1BF-4F34-BE77-5FD0AB745777}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dangl.AVACloudClientGenerator.Tests", "test\Dangl.AVACloudClientGenerator.Tests\Dangl.AVACloudClientGenerator.Tests.csproj", "{E2124666-0CCE-4E7F-8D3A-F95874B5D419}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E148C4D-045D-4D65-A249-8EE5C3980498}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{601AE3D5-BB75-4051-BAC4-F824DE5C2319}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
