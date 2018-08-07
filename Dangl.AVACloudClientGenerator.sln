@@ -3,13 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dangl.AVACloudClientGenerator", "src\Dangl.AVACloudClientGenerator\Dangl.AVACloudClientGenerator.csproj", "{08DF3AA7-EF61-4292-A006-27644A454D58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dangl.AVACloudClientGenerator", "src\Dangl.AVACloudClientGenerator\Dangl.AVACloudClientGenerator.csproj", "{08DF3AA7-EF61-4292-A006-27644A454D58}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D8C53F05-E3F9-4EEF-AAB4-EAE831FE1310}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{B171DCAE-A1BF-4F34-BE77-5FD0AB745777}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dangl.AVACloudClientGenerator.Tests", "test\Dangl.AVACloudClientGenerator.Tests\Dangl.AVACloudClientGenerator.Tests.csproj", "{E2124666-0CCE-4E7F-8D3A-F95874B5D419}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dangl.AVACloudClientGenerator.Tests", "test\Dangl.AVACloudClientGenerator.Tests\Dangl.AVACloudClientGenerator.Tests.csproj", "{E2124666-0CCE-4E7F-8D3A-F95874B5D419}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E148C4D-045D-4D65-A249-8EE5C3980498}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE.md = LICENSE.md
@@ -32,6 +33,8 @@ Global
 		{E2124666-0CCE-4E7F-8D3A-F95874B5D419}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2124666-0CCE-4E7F-8D3A-F95874B5D419}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2124666-0CCE-4E7F-8D3A-F95874B5D419}.Release|Any CPU.Build.0 = Release|Any CPU
+		{601AE3D5-BB75-4051-BAC4-F824DE5C2319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{601AE3D5-BB75-4051-BAC4-F824DE5C2319}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
