@@ -1,6 +1,7 @@
 # Dangl.AVACloudClientGenerator
 
 [![Built with Nuke](http://nuke.build/rounded)](https://www.nuke.build)  
+[![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=Dangl.AVACloudClientGenerator/develop)](https://jenkins.dangl.me/job/Dangl.AVACloudClientGenerator/job/develop/)
 
 ## CLI Usage
 
@@ -23,6 +24,10 @@ Currently, the converter supports the following values for the `language` argume
 | Parameter | Language |
 |-----------|----------|
 | `Java`    | Produces a Java 8 compatible client |
+
+## Swagger API
+
+Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger-internal).
 
 ---
 [License](./LICENSE.md)
