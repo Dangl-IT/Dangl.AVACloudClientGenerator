@@ -12,6 +12,7 @@ using Nuke.Azure.KeyVault;
 using Nuke.GitHub;
 using static Nuke.GitHub.GitHubTasks;
 using Nuke.Common.Git;
+using System.Collections.Generic;
 
 [KeyVaultSettings(
     VaultBaseUrlParameterName = nameof(KeyVaultBaseUrl),
@@ -100,5 +101,28 @@ class Build : NukeBuild
                 .SetTag(GitVersion.NuGetVersion)
                 .SetPrerelease(isPrerelease)
                 .SetToken(GitHubAuthenticationToken));
+        });
+
+    Target GenerateClients => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var languages = new[] { "Java" };
+
+            var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / "debug" / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
+
+            foreach (var language in languages)
+            {
+                var outputPath = OutputDirectory / language;
+                var generatorSettings = new ToolSettings()
+                    .SetToolPath(ToolPathResolver.GetPathExecutable("dotnet"))
+                    .SetArgumentConfigurator(a => a
+                        .Add(generatorPath)
+                        .Add("-l {value}", language)
+                        .Add("-o {value}", outputPath));
+                StartProcess(generatorSettings)
+                    .AssertZeroExitCode();
+                System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");
+            }
         });
 }

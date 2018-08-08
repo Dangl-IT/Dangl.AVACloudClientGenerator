@@ -25,6 +25,12 @@ Currently, the converter supports the following values for the `language` argume
 |-----------|----------|
 | `Java`    | Produces a Java 8 compatible client |
 
+## Build Target
+
+By executing the following command in the project root, all available clients are generated:
+
+    powershell ./build.ps1 GenerateClients
+
 ## Swagger API
 
 Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger-internal).
