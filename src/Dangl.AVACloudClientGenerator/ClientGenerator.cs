@@ -1,7 +1,6 @@
 ﻿using Dangl.AVACloudClientGenerator.Shared;
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 
 namespace Dangl.AVACloudClientGenerator
@@ -46,34 +45,8 @@ namespace Dangl.AVACloudClientGenerator
 
         private async Task WriteClientCodeAsync()
         {
-            using (var zipArchive = new System.IO.Compression.ZipArchive(_zippedClientCodeStream))
-            {
-                foreach (var entry in zipArchive.Entries)
-                {
-                    await WriteSingleEntryAsync(entry);
-                }
-            }
-        }
-
-        private async Task WriteSingleEntryAsync(ZipArchiveEntry entry)
-        {
-            var filePath = GetFilePath(entry);
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-            }
-            using (var entryStream = entry.Open())
-            {
-                using (var outputStream = File.Create(filePath))
-                {
-                    await entryStream.CopyToAsync(outputStream);
-                }
-            }
-        }
-
-        private string GetFilePath(ZipArchiveEntry entry)
-        {
-            return Path.Combine(_clientGeneratorOptions.OutputPathFolder, entry.FullName);
+            await new OutputWriter(_zippedClientCodeStream, _clientGeneratorOptions.OutputPathFolder)
+                .WriteCodeToDirectoryAndAddReadmeAndLicense();
         }
     }
 }
