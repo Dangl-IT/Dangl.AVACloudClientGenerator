@@ -1,22 +1,22 @@
+using Nuke.Azure.KeyVault;
 using Nuke.Common;
+using Nuke.Common.Git;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Utilities;
+using Nuke.GitHub;
+using System.IO;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
-using static Nuke.Common.Tools.DotNet.DotNetTasks;
-using System.IO;
 using static Nuke.Common.Tooling.ProcessTasks;
-using Nuke.Common.Tooling;
-using Nuke.Common.Utilities;
-using Nuke.Azure.KeyVault;
-using Nuke.GitHub;
+using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.GitHub.GitHubTasks;
-using Nuke.Common.Git;
-using System.Collections.Generic;
+using static Nuke.Common.Tools.Npm.NpmTasks;
 
 class Build : NukeBuild
 {
-    public static int Main () => Execute<Build>(x => x.Compile);
+    public static int Main() => Execute<Build>(x => x.Compile);
 
     [KeyVaultSettings(
         BaseUrlParameterName = nameof(KeyVaultBaseUrl),
@@ -24,13 +24,13 @@ class Build : NukeBuild
         ClientSecretParameterName = nameof(KeyVaultClientSecret))]
     readonly KeyVaultSettings KeyVaultSettings;
 
-    [Parameter] string KeyVaultBaseUrl;
-    [Parameter] string KeyVaultClientId;
-    [Parameter] string KeyVaultClientSecret;
+    [Parameter] readonly string KeyVaultBaseUrl;
+    [Parameter] readonly string KeyVaultClientId;
+    [Parameter] readonly string KeyVaultClientSecret;
     [GitVersion] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
-    [KeyVaultSecret] string GitHubAuthenticationToken;
+    [KeyVaultSecret] readonly string GitHubAuthenticationToken;
 
     Target Clean => _ => _
         .Executes(() =>
