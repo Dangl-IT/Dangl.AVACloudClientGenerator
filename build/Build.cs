@@ -14,13 +14,15 @@ using static Nuke.GitHub.GitHubTasks;
 using Nuke.Common.Git;
 using System.Collections.Generic;
 
-[KeyVaultSettings(
-    VaultBaseUrlParameterName = nameof(KeyVaultBaseUrl),
-    ClientIdParameterName = nameof(KeyVaultClientId),
-    ClientSecretParameterName = nameof(KeyVaultClientSecret))]
 class Build : NukeBuild
 {
     public static int Main () => Execute<Build>(x => x.Compile);
+
+    [KeyVaultSettings(
+        BaseUrlParameterName = nameof(KeyVaultBaseUrl),
+        ClientIdParameterName = nameof(KeyVaultClientId),
+        ClientSecretParameterName = nameof(KeyVaultClientSecret))]
+    readonly KeyVaultSettings KeyVaultSettings;
 
     [Parameter] string KeyVaultBaseUrl;
     [Parameter] string KeyVaultClientId;
@@ -93,7 +95,7 @@ class Build : NukeBuild
 
             var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
 
-            await PublishRelease(new GitHubReleaseSettings()
+            await PublishRelease(x => x
                 .SetArtifactPaths(new string[] { zipPath })
                 .SetCommitSha(GitVersion.Sha)
                 .SetRepositoryName(repositoryInfo.repositoryName)
