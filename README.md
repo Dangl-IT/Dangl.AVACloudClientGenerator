@@ -24,6 +24,7 @@ Currently, the converter supports the following values for the `language` argume
 | Parameter | Language |
 |-----------|----------|
 | `Java`    | Produces a Java 8 compatible client |
+| `TypeScriptNode`    | Produces a TypeScript / JavaScript package compatible with the NodeJs runtime |
 
 ## Build Target
 

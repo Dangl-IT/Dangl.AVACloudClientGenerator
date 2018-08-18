@@ -2,6 +2,7 @@
 {
     public enum ClientLanguage
     {
-        Java
+        Java,
+        TypeScriptNode
     }
 }
