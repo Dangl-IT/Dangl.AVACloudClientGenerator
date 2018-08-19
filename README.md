@@ -32,6 +32,19 @@ By executing the following command in the project root, all available clients ar
 
     powershell ./build.ps1 GenerateClients
 
+## Client Disctribution
+
+### Java
+
+The Java Client is [available for download on the homepage](https://www.dangl-it.com/articles/avacloud-clients/), there is no direct distribution of the binaries.
+
+### TypeScripe Node
+
+The TypeScript / JavaScript client for NodeJs is [published as npm package ](https://www.npmjs.com/package/@dangl/avacloud-client-node) `@dangl/avacloud-client-node`.  
+It is generated and published by running the following build script:
+
+    powershell ./build.ps1 GenerateAndPublishTypeScriptNpmClient
+
 ## Swagger API
 
 Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger-internal).
