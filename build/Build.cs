@@ -109,22 +109,44 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java" };
-
-            var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / "debug" / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
+            var languages = new[] { "Java", "TypeScriptNode" };
 
             foreach (var language in languages)
             {
-                var outputPath = OutputDirectory / language;
-                var generatorSettings = new ToolSettings()
-                    .SetToolPath(ToolPathResolver.GetPathExecutable("dotnet"))
-                    .SetArgumentConfigurator(a => a
-                        .Add(generatorPath)
-                        .Add("-l {value}", language)
-                        .Add("-o {value}", outputPath));
-                StartProcess(generatorSettings)
-                    .AssertZeroExitCode();
-                System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");
+                GenerateClient(language);
             }
+        });
+
+    private void GenerateClient(string language)
+    {
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / "debug" / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
+        var outputPath = OutputDirectory / language;
+        var generatorSettings = new ToolSettings()
+            .SetToolPath(ToolPathResolver.GetPathExecutable("dotnet"))
+            .SetArgumentConfigurator(a => a
+                .Add(generatorPath)
+                .Add("-l {value}", language)
+                .Add("-o {value}", outputPath));
+        StartProcess(generatorSettings)
+            .AssertZeroExitCode();
+        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");
+    }
+
+    Target GenerateAndPublishTypeScriptNpmClient => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            GenerateClient("TypeScriptNode");
+
+            var clientRoot = OutputDirectory / "TypeScriptNode";
+            var clientDir = clientRoot / "typescript-node-client";
+
+            CopyFile(clientRoot / "README.md", clientDir / "README.md");
+            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+
+            NpmInstall(x => x.SetWorkingDirectory(clientDir));
+            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+
+            Npm("publish --access=public", clientDir);
         });
 }
