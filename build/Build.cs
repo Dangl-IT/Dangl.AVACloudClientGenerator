@@ -68,9 +68,12 @@ class Build : NukeBuild
                 string testFile = OutputDirectory / $"test_{testRun++}.testresults.xml";
                 var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
 
-                StartProcess(dotnetPath, "xunit " +
-                                         "-nobuild " +
-                                         $"-xml {testFile.DoubleQuoteIfNeeded()}",
+                StartProcess(dotnetPath, "test " +
+                                         "--no-build " +
+                                         "--test-adapter-path:. " +
+                                         "--no-build " +
+                                         "--no-build " +
+                                         $"\"-logger:xunit;LogFilePath={testFile}\"",
                         workingDirectory: projectDirectory)
                     // AssertWairForExit() instead of AssertZeroExitCode()
                     // because we want to continue all tests even if some fail
