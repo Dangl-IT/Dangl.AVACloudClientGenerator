@@ -71,9 +71,7 @@ class Build : NukeBuild
                 StartProcess(dotnetPath, "test " +
                                          "--no-build " +
                                          "--test-adapter-path:. " +
-                                         "--no-build " +
-                                         "--no-build " +
-                                         $"\"-logger:xunit;LogFilePath={testFile}\"",
+                                         $"\"--logger:xunit;LogFilePath={testFile}\"",
                         workingDirectory: projectDirectory)
                     // AssertWairForExit() instead of AssertZeroExitCode()
                     // because we want to continue all tests even if some fail
