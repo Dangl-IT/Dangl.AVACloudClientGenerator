@@ -25,10 +25,10 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Stream> GetGeneratedCodeZipPackageAsync()
+        public async Task<Stream> GetGeneratedCodeZipPackageAsync(string swaggerDocumentUri)
         {
             var httpClient = new HttpClient();
-            var postRequestMessage = await GetPostRequestMessageAsync();
+            var postRequestMessage = await GetPostRequestMessageAsync(swaggerDocumentUri);
             var generatorResponse = await httpClient.SendAsync(postRequestMessage);
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
@@ -40,12 +40,12 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             }
         }
 
-        private async Task<HttpRequestMessage> GetPostRequestMessageAsync()
+        private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var javaClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync();
+            var javaClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
-                swaggerUrl = Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT,
+                swaggerUrl = swaggerDocumentUri,
                 options = javaClientOptions
             };
 

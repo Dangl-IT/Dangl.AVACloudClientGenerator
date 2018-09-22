@@ -13,9 +13,9 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Dictionary<string, object>> GetTypescriptNodeClientGeneratorOptionsAsync()
+        public async Task<Dictionary<string, object>> GetTypescriptNodeClientGeneratorOptionsAsync(string swaggerDocumentUri)
         {
-            var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync();
+            var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync(swaggerDocumentUri);
             return new Dictionary<string, object>
             {
                 { "supportsES6", "true" },

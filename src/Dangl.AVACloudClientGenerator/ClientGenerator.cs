@@ -23,14 +23,17 @@ namespace Dangl.AVACloudClientGenerator
 
         public async Task GenerateClientCodeAsync()
         {
+            var swaggerDocumentUri = string.IsNullOrWhiteSpace(_clientGeneratorOptions.SwaggerDocUri)
+                ? Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT
+                : _clientGeneratorOptions.SwaggerDocUri;
             switch (_clientGeneratorOptions.ClientLanguage)
             {
                 case ClientLanguage.Java:
-                    await GenerateJavaClient();
+                    await GenerateJavaClient(swaggerDocumentUri);
                     break;
 
                 case ClientLanguage.TypeScriptNode:
-                    await GenerateTypeScriptNodeClient();
+                    await GenerateTypeScriptNodeClient(swaggerDocumentUri);
                     break;
 
                 default:
@@ -40,18 +43,18 @@ namespace Dangl.AVACloudClientGenerator
             await WriteClientCodeAsync();
         }
 
-        private async Task GenerateJavaClient()
+        private async Task GenerateJavaClient(string swaggerDocumentUri)
         {
             var javaOptionsGenerator = new JavaGenerator.OptionsGenerator(_avaCloudVersion);
             var javaGenerator = new JavaGenerator.CodeGenerator(javaOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync();
+            _zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 
-        private async Task GenerateTypeScriptNodeClient()
+        private async Task GenerateTypeScriptNodeClient(string swaggerDocumentUri)
         {
             var typeScriptNodeOptionsGenerator = new TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
             var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync();
+            _zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 
         private async Task WriteClientCodeAsync()

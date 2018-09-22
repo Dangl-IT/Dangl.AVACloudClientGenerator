@@ -9,7 +9,7 @@ namespace Dangl.AVACloudClientGenerator.Tests.Shared
         [Fact]
         public async Task CanGetVersion()
         {
-            var version = await new AVACloudVersion().GetAvaCloudVersionAsync();
+            var version = await new AVACloudVersion().GetAvaCloudVersionAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT);
             Assert.False(string.IsNullOrWhiteSpace(version));
         }
     }

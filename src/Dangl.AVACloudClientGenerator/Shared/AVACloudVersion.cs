@@ -8,7 +8,7 @@ namespace Dangl.AVACloudClientGenerator.Shared
     {
         private string _avaCloudversion;
 
-        public async Task<string> GetAvaCloudVersionAsync()
+        public async Task<string> GetAvaCloudVersionAsync(string swaggerDocumentUri)
         {
             if (!string.IsNullOrWhiteSpace(_avaCloudversion))
             {
@@ -17,7 +17,7 @@ namespace Dangl.AVACloudClientGenerator.Shared
 
             var httpClient = new HttpClient();
             var swaggerDefinition = await httpClient
-                .GetStringAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT);
+                .GetStringAsync(swaggerDocumentUri);
             var json = JObject.Parse(swaggerDefinition);
             var avacloudVersion = (string)json["info"]["version"];
             _avaCloudversion = avacloudVersion;

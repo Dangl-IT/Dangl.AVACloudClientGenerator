@@ -15,6 +15,7 @@ Example:
 |-----------|-------------|
 | -o        | Path where to save the generated client to |
 | -l        | Language of the client. See below for available options |
+| -u        | Optional. Url of the Swagger definitions document. Defaults to 'https://avacloud-api.dangl-it.com/swagger-internal/swagger.json' |
 | --help    | Display options |
 
 ### Supported Languages

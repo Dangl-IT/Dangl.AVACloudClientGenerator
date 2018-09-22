@@ -13,7 +13,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var javaOptionsGenerator = new JavaGenerator.OptionsGenerator(_avaCloudVersion);
             var javaGenerator = new JavaGenerator.CodeGenerator(javaOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync())
+            using (var zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);
@@ -25,7 +25,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var typeScriptNodeOptionsGenerator = new TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
             var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync())
+            using (var zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);

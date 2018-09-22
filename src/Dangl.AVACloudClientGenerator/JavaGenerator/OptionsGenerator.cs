@@ -13,9 +13,9 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Dictionary<string, object>> GetJavaClientGeneratorOptionsAsync()
+        public async Task<Dictionary<string, object>> GetJavaClientGeneratorOptionsAsync(string swaggerDocumentUri)
         {
-            var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync();
+            var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync(swaggerDocumentUri);
             return new Dictionary<string, object>
             {
                 { "modelPackage", "com.danglit.avacloud.client.models" },
