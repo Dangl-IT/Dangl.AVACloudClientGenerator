@@ -49,7 +49,7 @@ It is generated and published by running the following build script:
 
 ### JavaScript
 
-The JavaScript client for Browsers is [published as npm package]() '@dangl/avacloud-client-javascript'
+The JavaScript client for Browsers is [published as npm package](https://www.npmjs.com/package/@dangl/avacloud-client-javascript) '@dangl/avacloud-client-javascript'
 It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishJavaScriptNpmClient
