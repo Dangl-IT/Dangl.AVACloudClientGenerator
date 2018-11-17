@@ -1,4 +1,4 @@
-﻿using Dangl.AVACloudClientGenerator.Shared;
+using Dangl.AVACloudClientGenerator.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -42,11 +42,11 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var javaClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
+            var typeScriptNodeClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
                 swaggerUrl = swaggerDocumentUri,
-                options = javaClientOptions
+                options = typeScriptNodeClientOptions
             };
 
             var camelCaseSerializerSettings = new JsonSerializerSettings
