@@ -164,7 +164,7 @@ class Build : NukeBuild
             var clientRoot = OutputDirectory / "JavaScript";
             var clientDir = clientRoot / "javascript-client";
 
-            MoveFile(clientRoot / "README.md", "API_README.md");
+            MoveFile(clientDir / "README.md", clientDir / "API_README.md");
             CopyFile(clientRoot / "README.md", clientDir / "README.md");
             CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
 
