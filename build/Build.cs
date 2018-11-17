@@ -81,8 +81,7 @@ class Build : NukeBuild
         });
 
     Target Publish => _ => _
-        .DependsOn(Compile)
-        .Executes(GenerateClients)
+        .DependsOn(GenerateClients)
         .Executes(async () =>
         {
             var publishDir = OutputDirectory / "publish";
