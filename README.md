@@ -26,6 +26,7 @@ Currently, the converter supports the following values for the `language` argume
 |-----------|----------|
 | `Java`    | Produces a Java 8 compatible client |
 | `TypeScriptNode`    | Produces a TypeScript / JavaScript package compatible with the NodeJs runtime |
+| `JavaScript`    | Produces a JavaScript package to be used in browsers |
 
 ## Build Target
 
@@ -41,14 +42,21 @@ The Java Client is [available for download on the homepage](https://www.dangl-it
 
 ### TypeScripe Node
 
-The TypeScript / JavaScript client for NodeJs is [published as npm package ](https://www.npmjs.com/package/@dangl/avacloud-client-node) `@dangl/avacloud-client-node`.  
+The TypeScript / JavaScript client for NodeJs is [published as npm package](https://www.npmjs.com/package/@dangl/avacloud-client-node) `@dangl/avacloud-client-node`.
 It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishTypeScriptNpmClient
 
+### JavaScript
+
+The JavaScript client for Browsers is [published as npm package]() '@dangl/avacloud-client-javascript'
+It is generated and published by running the following build script:
+
+    powershell ./build.ps1 GenerateAndPublishJavaScriptNpmClient
+
 ## Swagger API
 
-Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger-internal).
+Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger).
 
 ---
 [License](./LICENSE.md)

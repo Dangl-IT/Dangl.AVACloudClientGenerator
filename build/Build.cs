@@ -110,7 +110,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java", "TypeScriptNode" };
+            var languages = new[] { "Java", "TypeScriptNode", "JavaScript" };
 
             foreach (var language in languages)
             {
@@ -142,6 +142,25 @@ class Build : NukeBuild
             var clientRoot = OutputDirectory / "TypeScriptNode";
             var clientDir = clientRoot / "typescript-node-client";
 
+            CopyFile(clientRoot / "README.md", clientDir / "README.md");
+            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+
+            NpmInstall(x => x.SetWorkingDirectory(clientDir));
+            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+
+            Npm("publish --access=public", clientDir);
+        });
+
+    Target GenerateAndPublishJavaScriptNpmClient => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            GenerateClient("JavaScript");
+
+            var clientRoot = OutputDirectory / "JavaScript";
+            var clientDir = clientRoot / "javascript-client";
+
+            MoveFile(clientRoot / "README.md", "API_README.md");
             CopyFile(clientRoot / "README.md", clientDir / "README.md");
             CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
 

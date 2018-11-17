@@ -31,5 +31,17 @@ namespace Dangl.AVACloudClientGenerator.Tests
                 Assert.True(zippedClientCodeStream.Length > 0);
             }
         }
+
+        [Fact]
+        public async Task CanGenerateJavaScriptClient()
+        {
+            var javaScriptOptionsGenerator = new Dangl.AVACloudClientGenerator.JavaScriptGenerator.OptionsGenerator(_avaCloudVersion);
+            var javaScriptGenerator = new Dangl.AVACloudClientGenerator.JavaScriptGenerator.CodeGenerator(javaScriptOptionsGenerator, _avaCloudVersion);
+            using (var zippedClientCodeStream = await javaScriptGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            {
+                Assert.NotNull(zippedClientCodeStream);
+                Assert.True(zippedClientCodeStream.Length > 0);
+            }
+        }
     }
 }
