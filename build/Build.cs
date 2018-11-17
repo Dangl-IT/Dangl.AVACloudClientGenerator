@@ -13,6 +13,7 @@ using static Nuke.Common.Tooling.ProcessTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
+using System.Linq;
 
 class Build : NukeBuild
 {
@@ -81,10 +82,11 @@ class Build : NukeBuild
 
     Target Publish => _ => _
         .DependsOn(Compile)
+        .Executes(GenerateClients)
         .Executes(async () =>
         {
             var publishDir = OutputDirectory / "publish";
-            var zipPath = OutputDirectory / "AVACloud.Client.zip";
+            var zipPath = OutputDirectory / "AVACloud.Client.Generator.zip";
 
             DotNetPublish(x => DefaultDotNetPublish
                 .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
@@ -96,8 +98,10 @@ class Build : NukeBuild
 
             var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
 
+            var artifactPaths = new string[] { zipPath }.Concat(GlobFiles(OutputDirectory, "*.zip")).Distinct().ToArray();
+
             await PublishRelease(x => x
-                .SetArtifactPaths(new string[] { zipPath })
+                .SetArtifactPaths(artifactPaths)
                 .SetCommitSha(GitVersion.Sha)
                 .SetRepositoryName(repositoryInfo.repositoryName)
                 .SetRepositoryOwner(repositoryInfo.gitHubOwner)
