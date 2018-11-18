@@ -113,7 +113,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java", "TypeScriptNode", "JavaScript" };
+            var languages = new[] { "Java", "TypeScriptNode", "JavaScript", "Php" };
 
             foreach (var language in languages)
             {
