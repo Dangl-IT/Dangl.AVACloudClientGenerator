@@ -27,6 +27,7 @@ Currently, the converter supports the following values for the `language` argume
 | `Java`    | Produces a Java 8 compatible client |
 | `TypeScriptNode`    | Produces a TypeScript / JavaScript package compatible with the NodeJs runtime |
 | `JavaScript`    | Produces a JavaScript package to be used in browsers |
+| `Php`    | Produces a Php client |
 
 ## Build Target
 
@@ -39,6 +40,7 @@ By executing the following command in the project root, all available clients ar
 ### Java
 
 The Java Client is [available for download on the homepage](https://www.dangl-it.com/articles/avacloud-clients/), there is no direct distribution of the binaries.
+It can also found in this repositories Releases section on GitHub.
 
 ### TypeScripe Node
 
@@ -53,6 +55,10 @@ The JavaScript client for Browsers is [published as npm package](https://www.npm
 It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishJavaScriptNpmClient
+
+### PHP
+
+The PHP client is available for download in this repositories Releases section on GitHub.
 
 ## Swagger API
 

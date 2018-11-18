@@ -43,5 +43,17 @@ namespace Dangl.AVACloudClientGenerator.Tests
                 Assert.True(zippedClientCodeStream.Length > 0);
             }
         }
+
+        [Fact]
+        public async Task CanGeneratePhpClient()
+        {
+            var phpOptionsGenerator = new Dangl.AVACloudClientGenerator.PhpGenerator.OptionsGenerator(_avaCloudVersion);
+            var phpGenerator = new Dangl.AVACloudClientGenerator.PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
+            using (var zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            {
+                Assert.NotNull(zippedClientCodeStream);
+                Assert.True(zippedClientCodeStream.Length > 0);
+            }
+        }
     }
 }

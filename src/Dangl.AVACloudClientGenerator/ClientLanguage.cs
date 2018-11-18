@@ -4,6 +4,7 @@
     {
         Java,
         TypeScriptNode,
-        JavaScript
+        JavaScript,
+        Php
     }
 }

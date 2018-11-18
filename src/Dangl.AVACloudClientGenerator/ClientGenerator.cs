@@ -40,6 +40,10 @@ namespace Dangl.AVACloudClientGenerator
                     await GenerateJavaScriptClient(swaggerDocumentUri);
                     break;
 
+                case ClientLanguage.Php:
+                    await GeneratePhpClient(swaggerDocumentUri);
+                    break;
+
                 default:
                     throw new NotImplementedException("The specified language is not supported");
             }
@@ -66,6 +70,13 @@ namespace Dangl.AVACloudClientGenerator
             var javaScriptOptionsGenerator = new JavaScriptGenerator.OptionsGenerator(_avaCloudVersion);
             var javaScriptGenerator = new JavaScriptGenerator.CodeGenerator(javaScriptOptionsGenerator, _avaCloudVersion);
             _zippedClientCodeStream = await javaScriptGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GeneratePhpClient(string swaggerDocumentUri)
+        {
+            var phpOptionsGenerator = new PhpGenerator.OptionsGenerator(_avaCloudVersion);
+            var phpGenerator = new PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 
         private async Task WriteClientCodeAsync()
