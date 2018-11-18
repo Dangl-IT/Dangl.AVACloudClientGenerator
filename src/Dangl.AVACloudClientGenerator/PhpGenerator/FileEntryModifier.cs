@@ -52,7 +52,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 jObject["require-dev"]["friendsofphp/php-cs-fixer"] = "~2.6";
 
                 var memStream = new MemoryStream();
-                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
                     await streamWriter.WriteAsync(jObject.ToString());
                 }
