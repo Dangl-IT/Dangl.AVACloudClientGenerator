@@ -39,7 +39,7 @@ namespace Dangl.AVACloudClientGenerator.JavaScriptGenerator
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var javaScriptClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
+            var javaScriptClientOptions = await _optionsGenerator.GetJavaScriptClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
                 swaggerUrl = swaggerDocumentUri,
