@@ -30,8 +30,11 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
-            var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync();
-            return generatedClientStream;
+            using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
+            {
+                var fileEntryModifier = new FileEntryModifier(generatedClientStream);
+                return await fileEntryModifier.UpdateComposerJsonAsync();
+            }
         }
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
