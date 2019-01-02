@@ -6,7 +6,7 @@
         {
             return @"### Licence
 
-#### Copyright (c) ***COPYRIGHT_YEAR*** Dangl IT - Georg Dangl, [https://www.dangl-it.com](https://www.dangl-it.com)
+#### Copyright (c) ***COPYRIGHT_YEAR*** Dangl IT GmbH, [https://www.dangl-it.com](https://www.dangl-it.com)
 
 This software shall only be used for non-commercial evaluation purposes.
 Please contact Dangl**IT** for a commercial licence.
