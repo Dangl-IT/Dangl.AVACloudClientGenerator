@@ -39,8 +39,7 @@ By executing the following command in the project root, all available clients ar
 
 ### Java
 
-The Java Client is [available for download on the homepage](https://www.dangl-it.com/articles/avacloud-clients/), there is no direct distribution of the binaries.
-It can also found in this repositories Releases section on GitHub.
+The Java client is available for download in this repositories Releases section on GitHub.
 
 ### TypeScripe Node
 
