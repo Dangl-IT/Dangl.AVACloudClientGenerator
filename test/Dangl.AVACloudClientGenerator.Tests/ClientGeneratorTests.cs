@@ -23,8 +23,8 @@ namespace Dangl.AVACloudClientGenerator.Tests
         [Fact]
         public async Task CanGenerateTypeScriptNodeClient()
         {
-            var typeScriptNodeOptionsGenerator = new TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
-            var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
+            var typeScriptNodeOptionsGenerator = new Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
+            var typeScriptNodeGenerator = new Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
             using (var zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
             {
                 Assert.NotNull(zippedClientCodeStream);
