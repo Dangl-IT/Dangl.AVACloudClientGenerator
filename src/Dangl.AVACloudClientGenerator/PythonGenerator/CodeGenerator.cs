@@ -2,10 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using System;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,12 +31,6 @@ namespace Dangl.AVACloudClientGenerator.PythonGenerator
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
             return await generatedClientResponse.Content.ReadAsStreamAsync();
-            /*using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
-            {
-                var fileEntryModifier = new FileEntryModifier(generatedClientStream);
-                return await fileEntryModifier.ReplaceDanglIdentityOAuth2Accessor();
-            }
-            */
         }
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)

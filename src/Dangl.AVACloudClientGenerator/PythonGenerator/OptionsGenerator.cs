@@ -21,7 +21,7 @@ namespace Dangl.AVACloudClientGenerator.PythonGenerator
                 { "packageName", "avacloud_client_python" },
                 { "projectName", "avacloud-client-python" },
                 { "packageVersion", avaCloudVersion },
-                { "packageUrl", "" } // TODO GITHUB URL
+                { "packageUrl", "https://github.com/Dangl-IT/avacloud-client-python" }
             };
         }
     }

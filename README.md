@@ -62,6 +62,8 @@ The PHP client is available for download in this repositories Releases section o
 
 ### Python
 
+The Python client is available for download in this repositories Releases section on GitHub and on https://github.com/Dangl-IT/avacloud-client-python.
+
 ## Swagger API
 
 Internally, it uses the [Swagger Generator](https://generator.swagger.io) to generate the [client API for Dangl.AVACloud](https://avacloud-api.dangl-it.com/swagger).
