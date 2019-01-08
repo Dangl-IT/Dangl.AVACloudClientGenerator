@@ -204,6 +204,8 @@ class Build : NukeBuild
                 Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
             }
 
+            mirrorRepoDir += "avacloud-client-python"; 
+
             // Delete all but .git/ in cloned repo
             var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
                 .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
@@ -228,7 +230,7 @@ class Build : NukeBuild
             });
 
             Git("add -A", mirrorRepoDir);
-            var commitMessage = "Mirror Commit: " + GitVersion.NuGetVersion;
+            var commitMessage = "Auto generated commit";
             Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
             Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
         });
