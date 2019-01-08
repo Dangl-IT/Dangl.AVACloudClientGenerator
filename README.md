@@ -28,6 +28,7 @@ Currently, the converter supports the following values for the `language` argume
 | `TypeScriptNode`    | Produces a TypeScript / JavaScript package compatible with the NodeJs runtime |
 | `JavaScript`    | Produces a JavaScript package to be used in browsers |
 | `Php`    | Produces a Php client |
+| `Python`    | Produces a Python client |
 
 ## Build Target
 
@@ -58,6 +59,8 @@ It is generated and published by running the following build script:
 ### PHP
 
 The PHP client is available for download in this repositories Releases section on GitHub.
+
+### Python
 
 ## Swagger API
 

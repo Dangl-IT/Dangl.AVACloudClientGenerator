@@ -55,5 +55,17 @@ namespace Dangl.AVACloudClientGenerator.Tests
                 Assert.True(zippedClientCodeStream.Length > 0);
             }
         }
+
+        [Fact]
+        public async Task CanGeneratePythonClient()
+        {
+            var pythonOptionsGenerator = new Dangl.AVACloudClientGenerator.PythonGenerator.OptionsGenerator(_avaCloudVersion);
+            var pythonGenerator = new Dangl.AVACloudClientGenerator.PythonGenerator.CodeGenerator(pythonOptionsGenerator, _avaCloudVersion);
+            using (var zippedClientCodeStream = await pythonGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            {
+                Assert.NotNull(zippedClientCodeStream);
+                Assert.True(zippedClientCodeStream.Length > 0);
+            }
+        }
     }
 }

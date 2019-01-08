@@ -1,12 +1,18 @@
-﻿using System;
+﻿using Dangl.AVACloudClientGenerator.Shared;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
+namespace Dangl.AVACloudClientGenerator.PythonGenerator
 {
+    /*
     public class FileEntryModifier
     {
         private readonly Stream _zipArchiveStream;
@@ -60,7 +66,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
                     .Replace("excelFile?: Buffer", "excelFile: FileParameter") // Buffer doesnt include filename
                     .Replace("gaebFile?: Buffer", "gaebFile: FileParameter") // Buffer doesnt include filename
                     + Environment.NewLine // The FileParameter should be used instead of a raw Buffer, otherwise
-                                          // no filename is included in the request and AVACloud rejects the request with a 400 error
+                    // no filename is included in the request and AVACloud rejects the request with a 400 error
                     + @"
 export interface FileParameter {
   value: Buffer,
@@ -80,4 +86,5 @@ export interface FileParameter {
             }
         }
     }
+    */
 }

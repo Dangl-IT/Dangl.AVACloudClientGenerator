@@ -5,6 +5,7 @@
         Java,
         TypeScriptNode,
         JavaScript,
-        Php
+        Php,
+        Python
     }
 }

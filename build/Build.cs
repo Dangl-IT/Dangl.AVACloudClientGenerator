@@ -13,11 +13,14 @@ using static Nuke.Common.Tooling.ProcessTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
+using static Nuke.Common.Tools.Git.GitTasks;
 using System.Linq;
+using System;
+using System.Collections.Generic;
 
 class Build : NukeBuild
 {
-    public static int Main() => Execute<Build>(x => x.Compile);
+    public static int Main() => Execute<Build>(x => x.GenerateAndPublishPythonClient);
 
     [KeyVaultSettings(
         BaseUrlParameterName = nameof(KeyVaultBaseUrl),
@@ -113,7 +116,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java", "TypeScriptNode", "JavaScript", "Php" };
+            var languages = new[] { "Java", "TypeScriptNode", "JavaScript", "Php", "Python" };
 
             foreach (var language in languages)
             {
@@ -172,4 +175,63 @@ class Build : NukeBuild
 
             Npm("publish --access=public", clientDir);
         });
+
+    Target GenerateAndPublishPythonClient => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            GenerateClient("Python");
+
+            var clientRoot = OutputDirectory / "Python";
+            var clientDir = clientRoot / "python-client";
+
+            MoveFile(clientDir / "README.md", clientDir / "API_README.md");
+            CopyFile(clientRoot / "README.md", clientDir / "README.md");
+            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+
+            var mirrorRepoDir = OutputDirectory / "MirrorRepo";
+            Directory.CreateDirectory(mirrorRepoDir);
+            var mirrorBranchName = "master";
+            var mirrorRepoUrl = "https://github.com/Dangl-IT/avacloud-client-python.git";
+
+            try
+            {
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+            }
+            catch
+            {
+                // If the branch doesn't exist, it should be created
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+            }
+
+            // Delete all but .git/ in cloned repo
+            var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
+                .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
+            DeleteDirectories(dirs);
+            var files = Directory.EnumerateFiles(mirrorRepoDir)
+                .ToList();
+            files.ForEach(File.Delete);
+            // Copy data into cloned repo
+            var dirsToCopy = Directory.EnumerateDirectories(clientDir)
+                .ToList();
+            dirsToCopy.ForEach(d =>
+            {
+                var folderName = Path.GetFileName(d);
+                CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
+            });
+            var filesToCopy = Directory.EnumerateFiles(clientDir)
+                .ToList();
+            filesToCopy.ForEach(f =>
+            {
+                var fileName = Path.GetFileName(f);
+                File.Copy(f, mirrorRepoDir / fileName);
+            });
+
+            Git("add -A", mirrorRepoDir);
+            var commitMessage = "Mirror Commit: " + GitVersion.NuGetVersion;
+            Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
+            Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
+        });
+
+    // TODO GENERATE AND PUBLISH PYTHON -> TODO UPDATE README WITH INFOS ABOUT PYTHIN
 }
