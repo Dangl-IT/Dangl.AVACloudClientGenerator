@@ -234,6 +234,4 @@ class Build : NukeBuild
             Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
             Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
         });
-
-    // TODO GENERATE AND PUBLISH PYTHON -> TODO UPDATE README WITH INFOS ABOUT PYTHIN
 }
