@@ -34,6 +34,8 @@ class Build : NukeBuild
     [GitVersion] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
+    [Parameter] readonly string NodePublishVersionOverride;
+
     [KeyVaultSecret] readonly string GitHubAuthenticationToken;
 
     Target Clean => _ => _
@@ -151,6 +153,11 @@ class Build : NukeBuild
             CopyFile(clientRoot / "README.md", clientDir / "README.md");
             CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
 
+            if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
+            {
+                Npm($"version {NodePublishVersionOverride}", clientDir);
+            }
+
             NpmInstall(x => x.SetWorkingDirectory(clientDir));
             NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
 
@@ -169,6 +176,11 @@ class Build : NukeBuild
             MoveFile(clientDir / "README.md", clientDir / "API_README.md");
             CopyFile(clientRoot / "README.md", clientDir / "README.md");
             CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+
+            if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
+            {
+                Npm($"version {NodePublishVersionOverride}", clientDir);
+            }
 
             NpmInstall(x => x.SetWorkingDirectory(clientDir));
             NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
