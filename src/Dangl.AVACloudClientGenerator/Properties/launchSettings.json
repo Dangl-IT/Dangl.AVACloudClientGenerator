@@ -2,7 +2,7 @@
   "profiles": {
     "Dangl.AVACloudClientGenerator": {
       "commandName": "Project",
-      "commandLineArgs": "-o \"funkyoutput\" -l Java"
+      "commandLineArgs": "-o \"debugoutput\" -l Java"
     }
   }
 }

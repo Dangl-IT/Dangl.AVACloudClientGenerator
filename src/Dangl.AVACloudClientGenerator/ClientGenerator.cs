@@ -1,7 +1,6 @@
 ﻿using Dangl.AVACloudClientGenerator.Shared;
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 
 namespace Dangl.AVACloudClientGenerator
@@ -24,10 +23,29 @@ namespace Dangl.AVACloudClientGenerator
 
         public async Task GenerateClientCodeAsync()
         {
+            var swaggerDocumentUri = string.IsNullOrWhiteSpace(_clientGeneratorOptions.SwaggerDocUri)
+                ? Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT
+                : _clientGeneratorOptions.SwaggerDocUri;
             switch (_clientGeneratorOptions.ClientLanguage)
             {
                 case ClientLanguage.Java:
-                    await GenerateJavaClient();
+                    await GenerateJavaClient(swaggerDocumentUri);
+                    break;
+
+                case ClientLanguage.TypeScriptNode:
+                    await GenerateTypeScriptNodeClient(swaggerDocumentUri);
+                    break;
+
+                case ClientLanguage.JavaScript:
+                    await GenerateJavaScriptClient(swaggerDocumentUri);
+                    break;
+
+                case ClientLanguage.Php:
+                    await GeneratePhpClient(swaggerDocumentUri);
+                    break;
+
+                case ClientLanguage.Python:
+                    await GeneratePythonClient(swaggerDocumentUri);
                     break;
 
                 default:
@@ -37,43 +55,45 @@ namespace Dangl.AVACloudClientGenerator
             await WriteClientCodeAsync();
         }
 
-        private async Task GenerateJavaClient()
+        private async Task GenerateJavaClient(string swaggerDocumentUri)
         {
             var javaOptionsGenerator = new JavaGenerator.OptionsGenerator(_avaCloudVersion);
             var javaGenerator = new JavaGenerator.CodeGenerator(javaOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync();
+            _zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GenerateTypeScriptNodeClient(string swaggerDocumentUri)
+        {
+            var typeScriptNodeOptionsGenerator = new TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
+            var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GenerateJavaScriptClient(string swaggerDocumentUri)
+        {
+            var javaScriptOptionsGenerator = new JavaScriptGenerator.OptionsGenerator(_avaCloudVersion);
+            var javaScriptGenerator = new JavaScriptGenerator.CodeGenerator(javaScriptOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await javaScriptGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GeneratePhpClient(string swaggerDocumentUri)
+        {
+            var phpOptionsGenerator = new PhpGenerator.OptionsGenerator(_avaCloudVersion);
+            var phpGenerator = new PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GeneratePythonClient(string swaggerDocumentUri)
+        {
+            var pythonOptionsGenerator = new PythonGenerator.OptionsGenerator(_avaCloudVersion);
+            var pythonGenerator = new PythonGenerator.CodeGenerator(pythonOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await pythonGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 
         private async Task WriteClientCodeAsync()
         {
-            using (var zipArchive = new System.IO.Compression.ZipArchive(_zippedClientCodeStream))
-            {
-                foreach (var entry in zipArchive.Entries)
-                {
-                    await WriteSingleEntryAsync(entry);
-                }
-            }
-        }
-
-        private async Task WriteSingleEntryAsync(ZipArchiveEntry entry)
-        {
-            var filePath = GetFilePath(entry);
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-            }
-            using (var entryStream = entry.Open())
-            {
-                using (var outputStream = File.Create(filePath))
-                {
-                    await entryStream.CopyToAsync(outputStream);
-                }
-            }
-        }
-
-        private string GetFilePath(ZipArchiveEntry entry)
-        {
-            return Path.Combine(_clientGeneratorOptions.OutputPathFolder, entry.FullName);
+            await new OutputWriter(_zippedClientCodeStream, _clientGeneratorOptions.OutputPathFolder)
+                .WriteCodeToDirectoryAndAddReadmeAndLicense();
         }
     }
 }

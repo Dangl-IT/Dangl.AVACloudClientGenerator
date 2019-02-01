@@ -7,13 +7,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dangl.AVACloudClientGenerator.JavaGenerator
+namespace Dangl.AVACloudClientGenerator.PythonGenerator
 {
     public class CodeGenerator
     {
         private readonly OptionsGenerator _optionsGenerator;
         private readonly AVACloudVersion _avaCloudVersion;
-        public const string SWAGGER_GENERATOR_LANGUAGE_PARAM = "java";
+        public const string SWAGGER_GENERATOR_LANGUAGE_PARAM = "python";
 
         public CodeGenerator(OptionsGenerator optionsGenerator,
             AVACloudVersion avaCloudVersion)
@@ -30,17 +30,16 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
-            var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync();
-            return generatedClientStream;
+            return await generatedClientResponse.Content.ReadAsStreamAsync();
         }
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var javaClientOptions = await _optionsGenerator.GetJavaClientGeneratorOptionsAsync(swaggerDocumentUri);
+            var typeScriptNodeClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
                 swaggerUrl = swaggerDocumentUri,
-                options = javaClientOptions
+                options = typeScriptNodeClientOptions
             };
 
             var camelCaseSerializerSettings = new JsonSerializerSettings
