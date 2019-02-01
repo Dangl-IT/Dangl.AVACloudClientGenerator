@@ -54,6 +54,21 @@ namespace Dangl.AVACloudClientGenerator.JavaScriptGenerator
                         }
                     }
                 }
+
+                var apiClientEntry = archive.Entries.Single(e => e.FullName.EndsWith("ApiClient.js"));
+                using (var entryStream = apiClientEntry.Open())
+                {
+                    using (var correctedStream = await FixFileResponseConversionAsync(entryStream))
+                    {
+                        apiClientEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(apiClientEntry.FullName);
+                        using (var updatedEntryStream = updatedEntry.Open())
+                        {
+                            await correctedStream.CopyToAsync(updatedEntryStream);
+                        }
+                    }
+                }
+
             }
             memStream.Position = 0;
             return memStream;
@@ -131,6 +146,24 @@ namespace Dangl.AVACloudClientGenerator.JavaScriptGenerator
                 using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
                 {
                     await streamWriter.WriteAsync(modifiedContent);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> FixFileResponseConversionAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var apiClientText = await streamReader.ReadToEndAsync();
+
+                apiClientText = apiClientText.Replace("(type === Object)", "(type === Object || type === File)");
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(apiClientText);
                 }
                 memStream.Position = 0;
                 return memStream;
