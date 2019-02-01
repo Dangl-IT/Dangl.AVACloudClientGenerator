@@ -87,7 +87,7 @@ namespace Dangl.AVACloudClientGenerator.JavaScriptGenerator
                 jObject["devDependencies"]["uglify-js"] = "3.4.9";
 
                 var memStream = new MemoryStream();
-                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
                     await streamWriter.WriteAsync(jObject.ToString());
                 }
