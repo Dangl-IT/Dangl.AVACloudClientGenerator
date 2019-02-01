@@ -41,6 +41,8 @@ namespace Dangl.AVACloudClientGenerator.Tests.JavaScriptGenerator
                         streamWriter.Write(GetIElementDtoContent());
                     }
                 }
+
+                var apiClientEntry = zipArchive.CreateEntry("ApiClient.js");
             }
 
             memoryStream.Position = 0;
