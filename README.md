@@ -49,12 +49,16 @@ It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishTypeScriptNpmClient
 
+Use the optional `NodePublishVersionOverride` parameter to supply a custom version instead of syncing with the AVACloud version.
+
 ### JavaScript
 
 The JavaScript client for Browsers is [published as npm package](https://www.npmjs.com/package/@dangl/avacloud-client-javascript) '@dangl/avacloud-client-javascript'
 It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishJavaScriptNpmClient
+
+Use the optional `NodePublishVersionOverride` parameter to supply a custom version instead of syncing with the AVACloud version.
 
 ### PHP
 
