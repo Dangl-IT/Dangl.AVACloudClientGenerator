@@ -78,6 +78,16 @@ export interface FileParameter {
                 // form the 'requests' package threw an exception
                 typeScriptCode = Regex.Replace(typeScriptCode, "([ ]+)body: ObjectSerializer\\.serialize\\(([a-zA-Z]+), \"ProjectDto\"\\)", "$1body: $2,\r\n$1json: true");
 
+                // The following fixes the deserialization of the returned data if it's a ProjectDto
+                // The generated Swagger code does not produce correct results for Enumerations, instead
+                // they're mapped to an object, thus the serialization produces a format that is rejected
+                // by the AVACloud API endpoint
+                typeScriptCode = typeScriptCode.Replace("public static deserialize(data: any, type: string) {",
+                    "public static deserialize(data: any, type: string) {"
+                    + "\r\n        if (type === 'ProjectDto') {"
+                    + "\r\n            return data;"
+                    + "\r\n        }");
+
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
                 {
