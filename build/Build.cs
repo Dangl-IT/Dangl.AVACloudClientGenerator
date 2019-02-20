@@ -35,6 +35,7 @@ class Build : NukeBuild
     [GitRepository] readonly GitRepository GitRepository;
 
     [Parameter] readonly string NodePublishVersionOverride;
+    [Parameter] readonly string PythonClientRepositoryTag;
 
     [KeyVaultSecret] readonly string GitHubAuthenticationToken;
 
@@ -190,6 +191,7 @@ class Build : NukeBuild
 
     Target GenerateAndPublishPythonClient => _ => _
         .DependsOn(Compile)
+        .Requires(() => PythonClientRepositoryTag)
         .Executes(() =>
         {
             GenerateClient("Python");
@@ -244,6 +246,8 @@ class Build : NukeBuild
             Git("add -A", mirrorRepoDir);
             var commitMessage = "Auto generated commit";
             Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
+            Git($"tag \"{PythonClientRepositoryTag}\"", mirrorRepoDir);
             Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
+            Git("push --tags", mirrorRepoDir);
         });
 }
