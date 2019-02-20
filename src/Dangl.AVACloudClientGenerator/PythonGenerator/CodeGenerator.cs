@@ -30,7 +30,11 @@ namespace Dangl.AVACloudClientGenerator.PythonGenerator
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
-            return await generatedClientResponse.Content.ReadAsStreamAsync();
+            using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
+            {
+                var fileEntryModifier = new FileEntryModifier(generatedClientStream);
+                return await fileEntryModifier.FixDeserializationMethodAsync();
+            }
         }
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
