@@ -36,7 +36,8 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
             {
                 var fileEntryModifier = new FileEntryModifier(generatedClientStream);
-                return await fileEntryModifier.ReplaceDanglIdentityOAuth2Accessor();
+                var stream = await fileEntryModifier.ReplaceDanglIdentityOAuth2Accessor();
+                return await fileEntryModifier.EnableCommentsInTsconfig(stream);
             }
         }
 
