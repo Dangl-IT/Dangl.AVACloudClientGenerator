@@ -97,5 +97,47 @@ export interface FileParameter {
                 return memStream;
             }
         }
+
+        public async Task<Stream> EnableCommentsInTsconfig(Stream fileStream)
+        {
+            var memStream = new MemoryStream();
+            await fileStream.CopyToAsync(memStream);
+            memStream.Position = 0;
+            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, true))
+            {
+                var tsconfigEntry = archive.Entries.Single(e => e.FullName.EndsWith("tsconfig.json"));
+                using (var entryStream = tsconfigEntry.Open())
+                {
+                    using (var correctedEntryStream = await UpdateTsConfigAndEnableComments(entryStream))
+                    {
+                        tsconfigEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(tsconfigEntry.FullName);
+
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
+            }
+            memStream.Position = 0;
+            return memStream;
+        }
+
+        private async Task<Stream> UpdateTsConfigAndEnableComments(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var fileContent = await streamReader.ReadToEndAsync();
+                fileContent = fileContent.Replace("\"removeComments\": true", "\"removeComments\": false");
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
+                {
+                    await streamWriter.WriteAsync(fileContent);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
     }
 }
