@@ -9,7 +9,7 @@ You can use the code generator from the command line. It is available for downlo
 section of this repository. To run it, it requires `dotnet` to be installed.  
 Example:
 
-    dotnet Dangl.AVACloudClientGenerator.dll -l <Language >-o <OutputFolder>
+    dotnet Dangl.AVACloudClientGenerator.dll -l <Language> -o <OutputFolder>
 
 | Parameter | Description |
 |-----------|-------------|
@@ -53,7 +53,7 @@ Use the optional `NodePublishVersionOverride` parameter to supply a custom versi
 
 ### JavaScript
 
-The JavaScript client for Browsers is [published as npm package](https://www.npmjs.com/package/@dangl/avacloud-client-javascript) '@dangl/avacloud-client-javascript'
+The JavaScript client for Browsers is [published as npm package](https://www.npmjs.com/package/@dangl/avacloud-client-javascript) `@dangl/avacloud-client-javascript`
 It is generated and published by running the following build script:
 
     powershell ./build.ps1 GenerateAndPublishJavaScriptNpmClient
