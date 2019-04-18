@@ -37,6 +37,8 @@ class Build : NukeBuild
     [Parameter] readonly string NodePublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
 
+    [Parameter] readonly string CustomSwaggerDefinitionUrl;
+
     [KeyVaultSecret] readonly string GitHubAuthenticationToken;
 
     Target Clean => _ => _
@@ -133,10 +135,24 @@ class Build : NukeBuild
         var outputPath = OutputDirectory / language;
         var generatorSettings = new ToolSettings()
             .SetToolPath(ToolPathResolver.GetPathExecutable("dotnet"))
-            .SetArgumentConfigurator(a => a
+            .SetArgumentConfigurator(a =>
+            {
+                a
                 .Add(generatorPath)
                 .Add("-l {value}", language)
-                .Add("-o {value}", outputPath));
+                .Add("-o {value}", outputPath);
+
+                if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
+                {
+                    Logger.Log("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
+                    a.Add("-u {value}", CustomSwaggerDefinitionUrl);
+                }
+
+                return a;
+            });
+
+
+
         StartProcess(generatorSettings)
             .AssertZeroExitCode();
         System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");

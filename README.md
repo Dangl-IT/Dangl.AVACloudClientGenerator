@@ -36,6 +36,10 @@ By executing the following command in the project root, all available clients ar
 
     powershell ./build.ps1 GenerateClients
 
+You can optionally pass the `CustomSwaggerDefinitionUrl`, e.g.:
+
+    powershell ./build.ps1 GenerateClients -CustomSwaggerDefinitionUrl https://avacloud-api-dev.dangl-it.com/swagger/swagger.json
+
 ## Client Disctribution
 
 ### Java
