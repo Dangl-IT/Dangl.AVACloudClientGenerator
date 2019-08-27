@@ -27,7 +27,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
                 var apiDefinitionEntry = archive.Entries.Single(e => e.FullName.EndsWith("api.ts"));
                 using (var entryStream = apiDefinitionEntry.Open())
                 {
-                    using (var correctedEntryStream = await ReplaceDanglIdentityAccessorInFile(entryStream))
+                    using (var correctedEntryStream = await ReplaceDanglIdentityAccessorInFileAndFixDuplicatedJsonValueInRequest(entryStream))
                     {
                         apiDefinitionEntry.Delete();
                         var updatedEntry = archive.CreateEntry(apiDefinitionEntry.FullName);
@@ -43,7 +43,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             return memStream;
         }
 
-        private async Task<Stream> ReplaceDanglIdentityAccessorInFile(Stream fileStream)
+        private async Task<Stream> ReplaceDanglIdentityAccessorInFileAndFixDuplicatedJsonValueInRequest(Stream fileStream)
         {
             using (var streamReader = new StreamReader(fileStream))
             {
@@ -87,6 +87,10 @@ export interface FileParameter {
                     + "\r\n        if (type === 'ProjectDto') {"
                     + "\r\n            return data;"
                     + "\r\n        }");
+
+                // There's been a bug in the generated code where the localVarRequestOptions object
+                // had the attribute for Json set twice
+                typeScriptCode = Regex.Replace(typeScriptCode, "json: true,(\r\n?|\n)\\s+body: avaProject,(\r\n?|\n)\\s+json: true", "json: true,\r\n            body: avaProject");
 
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
