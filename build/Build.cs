@@ -14,9 +14,11 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
+using static Nuke.Common.IO.TextTasks;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 class Build : NukeBuild
 {
@@ -263,6 +265,73 @@ class Build : NukeBuild
             var commitMessage = "Auto generated commit";
             Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
             Git($"tag \"{PythonClientRepositoryTag}\"", mirrorRepoDir);
+            Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
+            Git("push --tags", mirrorRepoDir);
+        });
+
+    Target GenerateAndPublishPhpClient => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            GenerateClient("Php");
+
+            var composerJsonFile = GlobFiles(OutputDirectory, "**/*composer.json").Single();
+            var composerJson = ReadAllText(composerJsonFile);
+            var composerJObject = JObject.Parse(composerJson);
+            composerJObject["version"] = GitVersion.NuGetVersion;
+            WriteAllText(composerJsonFile, composerJObject.ToString());
+
+
+            var clientRoot = OutputDirectory / "Php";
+            var clientDir = clientRoot / "php-client" / "Dangl" / "AVACloud";
+
+            CopyFile(clientRoot / "README.md", clientDir / "CLIENT_README.md");
+            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+
+            var mirrorRepoDir = OutputDirectory / "MirrorRepo";
+            Directory.CreateDirectory(mirrorRepoDir);
+            var mirrorBranchName = "master";
+            var mirrorRepoUrl = "https://github.com/Dangl-IT/avacloud-client-php.git";
+
+            try
+            {
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+            }
+            catch
+            {
+                // If the branch doesn't exist, it should be created
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+            }
+
+            mirrorRepoDir += "avacloud-client-php";
+
+            // Delete all but .git/ in cloned repo
+            var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
+                .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
+            DeleteDirectories(dirs);
+            var files = Directory.EnumerateFiles(mirrorRepoDir)
+                .ToList();
+            files.ForEach(File.Delete);
+            // Copy data into cloned repo
+            var dirsToCopy = Directory.EnumerateDirectories(clientDir)
+                .ToList();
+            dirsToCopy.ForEach(d =>
+            {
+                var folderName = Path.GetFileName(d);
+                CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
+            });
+            var filesToCopy = Directory.EnumerateFiles(clientDir)
+                .ToList();
+            filesToCopy.ForEach(f =>
+            {
+                var fileName = Path.GetFileName(f);
+                File.Copy(f, mirrorRepoDir / fileName);
+            });
+
+            Git("add -A", mirrorRepoDir);
+            var commitMessage = "Auto generated commit";
+            Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
+            Git($"tag \"v{GitVersion.NuGetVersion}\"", mirrorRepoDir);
             Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
             Git("push --tags", mirrorRepoDir);
         });
