@@ -18,6 +18,12 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync(swaggerDocumentUri);
             return new Dictionary<string, object>
             {
+                { "packagePath", "Dangl\\AVACloud" },
+                { "composerVendorName", "dangl" },
+                { "composerProjectName", "avacloud" },
+                { "artifactVersion", avaCloudVersion},
+                { "gitUserId", "GeorgDangl" },
+                { "gitRepoId", "AVACloud" }
             };
         }
     }
