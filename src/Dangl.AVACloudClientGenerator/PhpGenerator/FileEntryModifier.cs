@@ -67,9 +67,6 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 keywords.Add("dangl");
                 keywords.Add("bim");
 
-                ReplaceAutoloadProperty(jObject, "autoload");
-                ReplaceAutoloadProperty(jObject, "autoload-dev");
-
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
@@ -79,21 +76,6 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 memStream.Position = 0;
                 return memStream;
             }
-        }
-
-        private void ReplaceAutoloadProperty(JObject jObject, string autoloadPropertyName)
-        {
-            var oldProp = jObject[autoloadPropertyName]["psr-4"] as JObject;
-            var newProp = new JObject();
-            foreach (var oldEntry in oldProp)
-            {
-                if (oldEntry.Key != "Swagger\\Client\\")
-                {
-                    newProp.Add(oldEntry);
-                }
-            }
-            newProp["Dangl\\AVACloud\\"] = oldProp["Swagger\\Client\\"];
-            jObject[autoloadPropertyName]["psr-4"] = newProp;
         }
 
         public async Task<Stream> UpdateReadmeAsync()

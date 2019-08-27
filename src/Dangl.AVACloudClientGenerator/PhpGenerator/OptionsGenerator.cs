@@ -23,7 +23,8 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 { "composerProjectName", "avacloud" },
                 { "artifactVersion", avaCloudVersion},
                 { "gitUserId", "GeorgDangl" },
-                { "gitRepoId", "AVACloud" }
+                { "gitRepoId", "AVACloud" },
+                {  "invokerPackage", "Dangl\\AVACloud" }
             };
         }
     }
