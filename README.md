@@ -40,7 +40,7 @@ You can optionally pass the `CustomSwaggerDefinitionUrl`, e.g.:
 
     powershell ./build.ps1 GenerateClients -CustomSwaggerDefinitionUrl https://avacloud-api-dev.dangl-it.com/swagger/swagger.json
 
-## Client Disctribution
+## Client Distribution
 
 ### Java
 
@@ -67,6 +67,12 @@ Use the optional `NodePublishVersionOverride` parameter to supply a custom versi
 ### PHP
 
 The PHP client is available for download in this repositories Releases section on GitHub.
+
+Additionally, it's published on Packagist to be directly consumed via `composer.json`: [https://packagist.org/packages/dangl/avacloud](https://packagist.org/packages/dangl/avacloud)
+
+The package is published by running this command:
+
+    powershell ./build.ps1 GenerateAndPublishPhpClient
 
 ### Python
 
