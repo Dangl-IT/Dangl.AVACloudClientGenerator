@@ -82,7 +82,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var testProjects = GlobFiles(RootDirectory / "test", "*.csproj");
+            var testProjects = GlobFiles(RootDirectory / "test", "**/*.csproj");
             var testRun = 1;
             foreach (var testProject in testProjects)
             {
