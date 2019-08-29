@@ -19,6 +19,9 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using Nuke.Common.Utilities.Collections;
+using static Nuke.Common.EnvironmentInfo;
+
 
 class Build : NukeBuild
 {
@@ -41,13 +44,18 @@ class Build : NukeBuild
 
     [Parameter] readonly string CustomSwaggerDefinitionUrl;
 
+    [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
+
     [KeyVaultSecret] readonly string GitHubAuthenticationToken;
+
+    AbsolutePath SourceDirectory => RootDirectory / "src";
+    AbsolutePath OutputDirectory => RootDirectory / "output";
 
     Target Clean => _ => _
         .Executes(() =>
         {
-            DeleteDirectories(GlobDirectories(SourceDirectory, "**/bin", "**/obj"));
-            DeleteDirectories(GlobDirectories(RootDirectory / "test", "**/bin", "**/obj"));
+            GlobDirectories(SourceDirectory, "**/bin", "**/obj").ForEach(DeleteDirectory);
+            GlobDirectories(RootDirectory / "test", "**/bin", "**/obj").ForEach(DeleteDirectory);
             EnsureCleanDirectory(OutputDirectory);
         });
 
@@ -55,23 +63,26 @@ class Build : NukeBuild
         .DependsOn(Clean)
         .Executes(() =>
         {
-            DotNetRestore(s => DefaultDotNetRestore);
+            DotNetRestore();
         });
 
     Target Compile => _ => _
         .DependsOn(Restore)
         .Executes(() =>
         {
-            DotNetBuild(s => DefaultDotNetBuild
+            DotNetBuild(x => x
+                .SetConfiguration(Configuration)
+                .EnableNoRestore()
                 .SetFileVersion(GitVersion.GetNormalizedFileVersion())
-                .SetAssemblyVersion(GitVersion.AssemblySemVer));
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion));
         });
 
     Target Test => _ => _
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var testProjects = GlobFiles(SolutionDirectory / "test", "*.csproj");
+            var testProjects = GlobFiles(RootDirectory / "test", "*.csproj");
             var testRun = 1;
             foreach (var testProject in testProjects)
             {
@@ -97,7 +108,12 @@ class Build : NukeBuild
             var publishDir = OutputDirectory / "publish";
             var zipPath = OutputDirectory / "AVACloud.Client.Generator.zip";
 
-            DotNetPublish(x => DefaultDotNetPublish
+            DotNetPublish(x => x
+                .SetConfiguration(Configuration)
+                .EnableNoRestore()
+                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion)
                 .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
                 .SetOutput(publishDir));
 
@@ -135,28 +151,18 @@ class Build : NukeBuild
     {
         var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory / language;
-        var generatorSettings = new ToolSettings()
-            .SetToolPath(ToolPathResolver.GetPathExecutable("dotnet"))
-            .SetArgumentConfigurator(a =>
-            {
-                a
-                .Add(generatorPath)
-                .Add("-l {value}", language)
-                .Add("-o {value}", outputPath);
-
-                if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
-                {
-                    Logger.Log("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
-                    a.Add("-u {value}", CustomSwaggerDefinitionUrl);
-                }
-
-                return a;
-            });
 
 
+        var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
+        if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
+        {
+            Logger.Log(LogLevel.Normal, "Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
+            arguments += $" -u {CustomSwaggerDefinitionUrl}";
+        }
 
-        StartProcess(generatorSettings)
+        StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
             .AssertZeroExitCode();
+
         System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");
     }
 
@@ -228,20 +234,20 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
             }
 
-            mirrorRepoDir += "avacloud-client-python"; 
+            mirrorRepoDir = mirrorRepoDir / "avacloud-client-python"; 
 
             // Delete all but .git/ in cloned repo
             var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
                 .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
-            DeleteDirectories(dirs);
+            dirs.ForEach(DeleteDirectory);
             var files = Directory.EnumerateFiles(mirrorRepoDir)
                 .ToList();
             files.ForEach(File.Delete);
@@ -261,12 +267,15 @@ class Build : NukeBuild
                 File.Copy(f, mirrorRepoDir / fileName);
             });
 
-            Git("add -A", mirrorRepoDir);
-            var commitMessage = "Auto generated commit";
-            Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
-            Git($"tag \"{PythonClientRepositoryTag}\"", mirrorRepoDir);
-            Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
-            Git("push --tags", mirrorRepoDir);
+            using (SwitchWorkingDirectory(mirrorRepoDir))
+            {
+                Git("add -A");
+                var commitMessage = "Auto generated commit";
+                Git($"commit -m \"{commitMessage}\"");
+                Git($"tag \"{PythonClientRepositoryTag}\"");
+                Git($"push --set-upstream origin {mirrorBranchName}");
+                Git("push --tags");
+            }
         });
 
     Target GenerateAndPublishPhpClient => _ => _
@@ -295,20 +304,18 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
             }
-
-            mirrorRepoDir += "avacloud-client-php";
 
             // Delete all but .git/ in cloned repo
             var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
                 .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
-            DeleteDirectories(dirs);
+            dirs.ForEach(DeleteDirectory);
             var files = Directory.EnumerateFiles(mirrorRepoDir)
                 .ToList();
             files.ForEach(File.Delete);
@@ -328,11 +335,15 @@ class Build : NukeBuild
                 File.Copy(f, mirrorRepoDir / fileName);
             });
 
-            Git("add -A", mirrorRepoDir);
-            var commitMessage = "Auto generated commit";
-            Git($"commit -m \"{commitMessage}\"", mirrorRepoDir);
-            Git($"tag \"v{GitVersion.NuGetVersion}\"", mirrorRepoDir);
-            Git($"push --set-upstream origin {mirrorBranchName}", mirrorRepoDir);
-            Git("push --tags", mirrorRepoDir);
+
+            using (SwitchWorkingDirectory(mirrorRepoDir))
+            {
+                Git("add -A");
+                var commitMessage = "Auto generated commit";
+                Git($"commit -m \"{commitMessage}\"");
+                Git($"tag \"v{GitVersion.NuGetVersion}\"");
+                Git($"push --set-upstream origin {mirrorBranchName}");
+                Git("push --tags");
+            }
         });
 }
