@@ -304,7 +304,7 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl} {mirrorRepoDir} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
             }
             catch
             {
