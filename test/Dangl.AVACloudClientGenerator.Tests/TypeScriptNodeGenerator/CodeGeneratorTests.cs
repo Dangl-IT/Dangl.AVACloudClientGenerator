@@ -38,6 +38,14 @@ namespace Dangl.AVACloudClientGenerator.Tests.TypeScriptNodeGenerator
                                 Assert.DoesNotContain("file? : Buffer", entryText);
                                 Assert.DoesNotContain("file :Buffer", entryText);
                                 Assert.DoesNotContain("file : Buffer", entryText);
+                                Assert.DoesNotContain("File?:Buffer", entryText);
+                                Assert.DoesNotContain("File?: Buffer", entryText);
+                                Assert.DoesNotContain("File:Buffer", entryText);
+                                Assert.DoesNotContain("File: Buffer", entryText);
+                                Assert.DoesNotContain("File? :Buffer", entryText);
+                                Assert.DoesNotContain("File? : Buffer", entryText);
+                                Assert.DoesNotContain("File :Buffer", entryText);
+                                Assert.DoesNotContain("File : Buffer", entryText);
                             }
                         }
                     }
