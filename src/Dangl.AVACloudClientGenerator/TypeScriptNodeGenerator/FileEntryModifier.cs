@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -142,6 +143,177 @@ export interface FileParameter {
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
                     await streamWriter.WriteAsync(fileContent);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        public async Task<Stream> UpdateTypeScriptVersion(Stream fileStream)
+        {
+            var memStream = new MemoryStream();
+            await fileStream.CopyToAsync(memStream);
+            memStream.Position = 0;
+            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, true))
+            {
+                var apiDefinitionEntry = archive.Entries.Single(e => e.FullName.EndsWith("package.json"));
+                using (var entryStream = apiDefinitionEntry.Open())
+                {
+                    using (var correctedEntryStream = await UpdateTypeScriptVersionInPackageJson(entryStream))
+                    {
+                        apiDefinitionEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(apiDefinitionEntry.FullName);
+
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
+            }
+            memStream.Position = 0;
+            return memStream;
+        }
+
+        private async Task<Stream> UpdateTypeScriptVersionInPackageJson(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var fileContent = await streamReader.ReadToEndAsync();
+                var originalFileContent = fileContent;
+
+                fileContent = fileContent
+                    .Replace("\"typescript\": \"^2.4.2\"", "\"typescript\": \"^3.4.3\"");
+
+                if (fileContent == originalFileContent)
+                {
+                    throw new Exception("Failed to fix the package.json, while updating the TypeScript version.");
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
+                {
+                    await streamWriter.WriteAsync(fileContent);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        public async Task<Stream> EnsureIElementDtoIsDeclaredBeforeUsed(Stream fileStream)
+        {
+            var memStream = new MemoryStream();
+            await fileStream.CopyToAsync(memStream);
+            memStream.Position = 0;
+            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, true))
+            {
+                var apiDefinitionEntry = archive.Entries.Single(e => e.FullName.EndsWith("api.ts"));
+                using (var entryStream = apiDefinitionEntry.Open())
+                {
+                    using (var correctedEntryStream = await UpdateApiToMoveIElementDeclarationBeforeUsage(entryStream))
+                    {
+                        apiDefinitionEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(apiDefinitionEntry.FullName);
+
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
+            }
+            memStream.Position = 0;
+            return memStream;
+        }
+
+        public static async Task<Stream> UpdateApiToMoveIElementDeclarationBeforeUsage(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var fileContent = await streamReader.ReadToEndAsync();
+                var originalFileContent = fileContent;
+
+
+                var lines = Regex.Split(fileContent, "\r\n?|\n")
+                    .Select((line, index) => new { line, index })
+                    .ToList();
+
+                var firstLineIndexThatMentionsIElement = lines
+                    .FirstOrDefault(l => l.line.Contains("extends IElementDto"))
+                    .index;
+
+                var iElementDtoDeclarationLineIndex = lines
+                    .FirstOrDefault(l => l.line.Contains("export class IElementDto"))
+                    .index;
+
+                var hasFoundEmptyLine = false;
+                while (!hasFoundEmptyLine)
+                {
+                    var line = lines[iElementDtoDeclarationLineIndex];
+                    if (string.IsNullOrWhiteSpace(line.line))
+                    {
+                        hasFoundEmptyLine = true;
+                    }
+                    else
+                    {
+                        iElementDtoDeclarationLineIndex--;
+                    }
+                }
+
+                var endIndexIElementDtoDefinition = iElementDtoDeclarationLineIndex;
+                var hasFoundClosingBracket = false;
+                while (!hasFoundClosingBracket)
+                {
+                    var line = lines[endIndexIElementDtoDefinition];
+                    if (line.line == "}")
+                    {
+                        hasFoundClosingBracket = true;
+                    }
+                    endIndexIElementDtoDefinition++;
+                }
+
+                if (iElementDtoDeclarationLineIndex < firstLineIndexThatMentionsIElement)
+                {
+                    // If this is entered, the file is already correctly structured
+                    var originalMemStream = new MemoryStream();
+                    using (var streamWriter = new StreamWriter(originalMemStream, new UTF8Encoding(false), 2048, true))
+                    {
+                        await streamWriter.WriteAsync(fileContent);
+                    }
+                    originalMemStream.Position = 0;
+                    return originalMemStream;
+                }
+
+                var iElementDtoDeclarationLines = lines
+                    .SkipWhile(l => l.index <= iElementDtoDeclarationLineIndex)
+                    .TakeWhile(l => l.index <= endIndexIElementDtoDefinition)
+                    .Select(l => l.line);
+
+                var linesBefore = lines
+                    .TakeWhile(l => l.index < iElementDtoDeclarationLineIndex
+                    && l.index < firstLineIndexThatMentionsIElement)
+                    .Select(l => l.line);
+
+                var linesAfter = lines
+                    .SkipWhile(l => l.index < firstLineIndexThatMentionsIElement)
+                    .Where(l => l.index <= iElementDtoDeclarationLineIndex
+                        || l.index > endIndexIElementDtoDefinition)
+                    .Select(l => l.line);
+
+                var stringWriter = new StringWriter();
+
+                var newOrderedLines = linesBefore
+                    .Concat(iElementDtoDeclarationLines)
+                    .Concat(linesAfter);
+                foreach (var line in newOrderedLines)
+                {
+                    stringWriter.WriteLine(line);
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
+                {
+                    await streamWriter.WriteAsync(stringWriter.ToString());
                 }
                 memStream.Position = 0;
                 return memStream;
