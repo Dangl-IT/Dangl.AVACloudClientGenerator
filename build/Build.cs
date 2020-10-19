@@ -1,27 +1,25 @@
-using Nuke.Azure.KeyVault;
+using Newtonsoft.Json.Linq;
 using Nuke.Common;
 using Nuke.Common.Git;
+using Nuke.Common.IO;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.AzureKeyVault.Attributes;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Utilities;
+using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
+using System;
 using System.IO;
+using System.Linq;
+using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
+using static Nuke.Common.IO.TextTasks;
 using static Nuke.Common.Tooling.ProcessTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
-using static Nuke.GitHub.GitHubTasks;
-using static Nuke.Common.Tools.Npm.NpmTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
-using static Nuke.Common.IO.TextTasks;
-using System.Linq;
-using System;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
-using Nuke.Common.Utilities.Collections;
-using static Nuke.Common.EnvironmentInfo;
-
+using static Nuke.Common.Tools.Npm.NpmTasks;
+using static Nuke.GitHub.GitHubTasks;
 
 class Build : NukeBuild
 {
@@ -36,7 +34,7 @@ class Build : NukeBuild
     [Parameter] readonly string KeyVaultBaseUrl;
     [Parameter] readonly string KeyVaultClientId;
     [Parameter] readonly string KeyVaultClientSecret;
-    [GitVersion] readonly GitVersion GitVersion;
+    [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
     [Parameter] readonly string NodePublishVersionOverride;
@@ -73,7 +71,7 @@ class Build : NukeBuild
             DotNetBuild(x => x
                 .SetConfiguration(Configuration)
                 .EnableNoRestore()
-                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion));
         });
@@ -111,7 +109,7 @@ class Build : NukeBuild
             DotNetPublish(x => x
                 .SetConfiguration(Configuration)
                 .EnableNoRestore()
-                .SetFileVersion(GitVersion.GetNormalizedFileVersion())
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion)
                 .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
