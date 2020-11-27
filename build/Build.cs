@@ -182,8 +182,8 @@ class Build : NukeBuild
                 Npm($"version {NodePublishVersionOverride}", clientDir);
             }
 
-            NpmInstall(x => x.SetWorkingDirectory(clientDir));
-            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+            NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
 
             Npm("publish --access=public", clientDir);
         });
@@ -206,8 +206,8 @@ class Build : NukeBuild
                 Npm($"version {NodePublishVersionOverride}", clientDir);
             }
 
-            NpmInstall(x => x.SetWorkingDirectory(clientDir));
-            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+            NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
 
             Npm("publish --access=public", clientDir);
         });
