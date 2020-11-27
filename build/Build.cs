@@ -39,6 +39,7 @@ class Build : NukeBuild
 
     [Parameter] readonly string NodePublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
+    [Parameter] readonly string PhpClientRepositoryTag;
 
     [Parameter] readonly string CustomSwaggerDefinitionUrl;
 
@@ -333,13 +334,18 @@ class Build : NukeBuild
                 File.Copy(f, mirrorRepoDir / fileName);
             });
 
+            var phpClientTag = PhpClientRepositoryTag;
+            if (string.IsNullOrWhiteSpace(phpClientTag))
+            {
+                phpClientTag =$"v{GitVersion.NuGetVersion}";
+            }
 
             using (SwitchWorkingDirectory(mirrorRepoDir))
             {
                 Git("add -A");
                 var commitMessage = "Auto generated commit";
                 Git($"commit -m \"{commitMessage}\"");
-                Git($"tag \"v{GitVersion.NuGetVersion}\"");
+                Git($"tag \"{phpClientTag}\"");
                 Git($"push --set-upstream origin {mirrorBranchName}");
                 Git("push --tags");
             }
