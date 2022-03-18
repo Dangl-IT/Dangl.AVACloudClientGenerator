@@ -39,6 +39,7 @@ class Build : NukeBuild
 
     [Parameter] readonly string NodePublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
+    [Parameter] readonly string PhpClientRepositoryTag;
 
     [Parameter] readonly string CustomSwaggerDefinitionUrl;
 
@@ -147,14 +148,14 @@ class Build : NukeBuild
 
     private void GenerateClient(string language)
     {
-        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net5.0" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory / language;
 
 
         var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
         if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
         {
-            Logger.Log(LogLevel.Normal, "Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
+            Serilog.Log.Information("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
             arguments += $" -u {CustomSwaggerDefinitionUrl}";
         }
 
@@ -181,8 +182,8 @@ class Build : NukeBuild
                 Npm($"version {NodePublishVersionOverride}", clientDir);
             }
 
-            NpmInstall(x => x.SetWorkingDirectory(clientDir));
-            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+            NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
 
             Npm("publish --access=public", clientDir);
         });
@@ -205,8 +206,8 @@ class Build : NukeBuild
                 Npm($"version {NodePublishVersionOverride}", clientDir);
             }
 
-            NpmInstall(x => x.SetWorkingDirectory(clientDir));
-            NpmRun(x => x.SetWorkingDirectory(clientDir).SetArgumentConfigurator(a => a.Add("build")));
+            NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
 
             Npm("publish --access=public", clientDir);
         });
@@ -232,12 +233,12 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
 
             mirrorRepoDir = mirrorRepoDir / "avacloud-client-python"; 
@@ -302,12 +303,12 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} {mirrorRepoDir} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl} {mirrorRepoDir} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
 
             // Delete all but .git/ in cloned repo
@@ -333,13 +334,18 @@ class Build : NukeBuild
                 File.Copy(f, mirrorRepoDir / fileName);
             });
 
+            var phpClientTag = PhpClientRepositoryTag;
+            if (string.IsNullOrWhiteSpace(phpClientTag))
+            {
+                phpClientTag =$"v{GitVersion.NuGetVersion}";
+            }
 
             using (SwitchWorkingDirectory(mirrorRepoDir))
             {
                 Git("add -A");
                 var commitMessage = "Auto generated commit";
                 Git($"commit -m \"{commitMessage}\"");
-                Git($"tag \"v{GitVersion.NuGetVersion}\"");
+                Git($"tag \"{phpClientTag}\"");
                 Git($"push --set-upstream origin {mirrorBranchName}");
                 Git("push --tags");
             }

@@ -1,6 +1,5 @@
 # Dangl.AVACloudClientGenerator
 
-[![Built with Nuke](http://nuke.build/rounded)](https://www.nuke.build)  
 [![Build Status](https://jenkins.dangl.me/buildStatus/icon?job=Dangl.AVACloudClientGenerator/develop)](https://jenkins.dangl.me/job/Dangl.AVACloudClientGenerator/job/develop/)
 
 ## CLI Usage
