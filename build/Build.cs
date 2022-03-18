@@ -155,7 +155,7 @@ class Build : NukeBuild
         var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
         if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
         {
-            Logger.Log(LogLevel.Normal, "Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
+            Serilog.Log.Information("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
             arguments += $" -u {CustomSwaggerDefinitionUrl}";
         }
 
@@ -233,12 +233,12 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
 
             mirrorRepoDir = mirrorRepoDir / "avacloud-client-python"; 
@@ -303,12 +303,12 @@ class Build : NukeBuild
 
             try
             {
-                Git($"clone {mirrorRepoUrl} {mirrorRepoDir} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl} {mirrorRepoDir} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
             catch
             {
                 // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Logger.Log(LogLevel.Normal, x.Text));
+                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
 
             // Delete all but .git/ in cloned repo
