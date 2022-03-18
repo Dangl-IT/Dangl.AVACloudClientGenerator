@@ -148,7 +148,7 @@ class Build : NukeBuild
 
     private void GenerateClient(string language)
     {
-        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "netcoreapp2.1" / "Dangl.AVACloudClientGenerator.dll";
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net5.0" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory / language;
 
 
