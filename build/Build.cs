@@ -286,7 +286,10 @@ class Build : NukeBuild
             var composerJsonFile = GlobFiles(OutputDirectory, "**/*composer.json").Single();
             var composerJson = ReadAllText(composerJsonFile);
             var composerJObject = JObject.Parse(composerJson);
-            composerJObject["version"] = GitVersion.NuGetVersion;
+            var composerVersion = string.IsNullOrWhiteSpace(PhpClientRepositoryTag)
+                ? GitVersion.NuGetVersion
+                : PhpClientRepositoryTag;
+            composerJObject["version"] = composerVersion;
             WriteAllText(composerJsonFile, composerJObject.ToString());
 
 
