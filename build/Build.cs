@@ -6,11 +6,16 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureKeyVault.Attributes;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web;
 using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
@@ -215,7 +220,7 @@ class Build : NukeBuild
     Target GenerateAndPublishPythonClient => _ => _
         .DependsOn(Compile)
         .Requires(() => PythonClientRepositoryTag)
-        .Executes(() =>
+        .Executes(async () =>
         {
             GenerateClient("Python");
 
@@ -241,7 +246,7 @@ class Build : NukeBuild
                 Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
             }
 
-            mirrorRepoDir = mirrorRepoDir / "avacloud-client-python"; 
+            mirrorRepoDir = mirrorRepoDir / "avacloud-client-python";
 
             // Delete all but .git/ in cloned repo
             var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
@@ -275,7 +280,51 @@ class Build : NukeBuild
                 Git($"push --set-upstream origin {mirrorBranchName}");
                 Git("push --tags");
             }
+
+            // Now, we also want to ensure that we have a Python3 client available
+            var pythonSourceFiles = GlobFiles(mirrorRepoDir, "**/*.py");
+            using var httpClient = new HttpClient();
+            Serilog.Log.Information($"Transforming {pythonSourceFiles.Count} source files to Python3");
+            foreach (var pythonSourceFile in pythonSourceFiles)
+            {
+                await ConvertFileFromPython2ToPython3Async(pythonSourceFile, httpClient);
+            }
+
+            using (SwitchWorkingDirectory(mirrorRepoDir))
+            {
+                var python3BranchName = "python3";
+                Git($"checkout -b {python3BranchName}");
+                Git("add -A");
+                var commitMessage = "Auto generated commit";
+                Git($"commit -m \"{commitMessage}\"");
+                Git($"tag \"{PythonClientRepositoryTag}-V3\"");
+                Git($"push --set-upstream origin {python3BranchName}");
+                Git("push --tags");
+            }
         });
+
+    private async Task ConvertFileFromPython2ToPython3Async(string filePath, HttpClient httpClient)
+    {
+        var python2Code = ReadAllText(filePath);
+
+        var formValue = new Dictionary<string, string>
+        {
+            { "input", python2Code }
+        };
+        var formContent = new FormUrlEncodedContent(formValue);
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://python2to3.com/");
+        request.Content = formContent;
+
+        var response = await httpClient.SendAsync(request);
+        Assert.True(response.IsSuccessStatusCode);
+        var responseHtml = await response.Content.ReadAsStringAsync();
+        var htmlDoc = new HtmlAgilityPack.HtmlDocument();
+        htmlDoc.LoadHtml(responseHtml);
+        var python3Code = htmlDoc.DocumentNode.SelectSingleNode("//textarea[@id='result']").InnerText;
+        python3Code = HttpUtility.HtmlDecode(python3Code);
+
+        WriteAllText(filePath, python3Code);
+    }
 
     Target GenerateAndPublishPhpClient => _ => _
         .DependsOn(Compile)
