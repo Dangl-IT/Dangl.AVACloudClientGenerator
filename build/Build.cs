@@ -222,86 +222,90 @@ class Build : NukeBuild
         .Requires(() => PythonClientRepositoryTag)
         .Executes(async () =>
         {
-            GenerateClient("Python");
+            await GenerateAndPushPythonCode("master", PythonClientRepositoryTag, false);
+            await GenerateAndPushPythonCode("python3", $"{PythonClientRepositoryTag}-V3", true);
+        });
 
-            var clientRoot = OutputDirectory / "Python";
-            var clientDir = clientRoot / "python-client";
+    private async Task GenerateAndPushPythonCode(string branchName,
+        string tag,
+        bool transformToV3)
+    {
+        var clientRoot = OutputDirectory / "Python";
+        var clientDir = clientRoot / "python-client";
+        
+        EnsureCleanDirectory(clientRoot);
+        EnsureCleanDirectory(clientDir);
 
-            MoveFile(clientDir / "README.md", clientDir / "API_README.md");
-            CopyFile(clientRoot / "README.md", clientDir / "README.md");
-            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+        GenerateClient("Python");
 
-            var mirrorRepoDir = OutputDirectory / "MirrorRepo";
-            Directory.CreateDirectory(mirrorRepoDir);
-            var mirrorBranchName = "master";
-            var mirrorRepoUrl = "https://github.com/Dangl-IT/avacloud-client-python.git";
+        MoveFile(clientDir / "README.md", clientDir / "API_README.md");
+        CopyFile(clientRoot / "README.md", clientDir / "README.md");
+        CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
 
-            try
-            {
-                Git($"clone {mirrorRepoUrl} -b {mirrorBranchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
-            }
-            catch
-            {
-                // If the branch doesn't exist, it should be created
-                Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
-            }
+        var mirrorRepoDir = OutputDirectory / "MirrorRepo";
+        Directory.CreateDirectory(mirrorRepoDir);
+        var mirrorRepoUrl = "https://github.com/Dangl-IT/avacloud-client-python.git";
 
-            mirrorRepoDir = mirrorRepoDir / "avacloud-client-python";
+        try
+        {
+            Git($"clone {mirrorRepoUrl} -b {branchName}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
+        }
+        catch
+        {
+            // If the branch doesn't exist, it should be created
+            Git($"clone {mirrorRepoUrl}", mirrorRepoDir)?.ToList().ForEach(x => Serilog.Log.Information(x.Text));
+        }
 
-            // Delete all but .git/ in cloned repo
-            var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
-                .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
-            dirs.ForEach(DeleteDirectory);
-            var files = Directory.EnumerateFiles(mirrorRepoDir)
-                .ToList();
-            files.ForEach(File.Delete);
-            // Copy data into cloned repo
-            var dirsToCopy = Directory.EnumerateDirectories(clientDir)
-                .ToList();
-            dirsToCopy.ForEach(d =>
-            {
-                var folderName = Path.GetFileName(d);
-                CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
-            });
-            var filesToCopy = Directory.EnumerateFiles(clientDir)
-                .ToList();
-            filesToCopy.ForEach(f =>
-            {
-                var fileName = Path.GetFileName(f);
-                File.Copy(f, mirrorRepoDir / fileName);
-            });
+        mirrorRepoDir = mirrorRepoDir / "avacloud-client-python";
 
-            using (SwitchWorkingDirectory(mirrorRepoDir))
-            {
-                Git("add -A");
-                var commitMessage = "Auto generated commit";
-                Git($"commit -m \"{commitMessage}\"");
-                Git($"tag \"{PythonClientRepositoryTag}\"");
-                Git($"push --set-upstream origin {mirrorBranchName}");
-                Git("push --tags");
-            }
+        // Delete all but .git/ in cloned repo
+        var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
+            .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
+        dirs.ForEach(DeleteDirectory);
+        var files = Directory.EnumerateFiles(mirrorRepoDir)
+            .ToList();
+        files.ForEach(File.Delete);
+        // Copy data into cloned repo
+        var dirsToCopy = Directory.EnumerateDirectories(clientDir)
+            .ToList();
+        dirsToCopy.ForEach(d =>
+        {
+            var folderName = Path.GetFileName(d);
+            CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
+        });
+        var filesToCopy = Directory.EnumerateFiles(clientDir)
+            .ToList();
+        filesToCopy.ForEach(f =>
+        {
+            var fileName = Path.GetFileName(f);
+            File.Copy(f, mirrorRepoDir / fileName);
+        });
 
+        if (transformToV3)
+        {
             // Now, we also want to ensure that we have a Python3 client available
             var pythonSourceFiles = GlobFiles(mirrorRepoDir, "**/*.py");
             using var httpClient = new HttpClient();
             Serilog.Log.Information($"Transforming {pythonSourceFiles.Count} source files to Python3");
+            var conversionTasks = new List<Task>();
             foreach (var pythonSourceFile in pythonSourceFiles)
             {
-                await ConvertFileFromPython2ToPython3Async(pythonSourceFile, httpClient);
+                conversionTasks.Add(ConvertFileFromPython2ToPython3Async(pythonSourceFile, httpClient));
             }
 
-            using (SwitchWorkingDirectory(mirrorRepoDir))
-            {
-                var python3BranchName = "python3";
-                Git($"checkout -b {python3BranchName}");
-                Git("add -A");
-                var commitMessage = "Auto generated commit";
-                Git($"commit -m \"{commitMessage}\"");
-                Git($"tag \"{PythonClientRepositoryTag}-V3\"");
-                Git($"push --set-upstream origin {python3BranchName}");
-                Git("push --tags");
-            }
-        });
+            await Task.WhenAll(conversionTasks);
+        }
+
+        using (SwitchWorkingDirectory(mirrorRepoDir))
+        {
+            Git("add -A");
+            var commitMessage = "Auto generated commit";
+            Git($"commit -m \"{commitMessage}\"");
+            Git($"tag \"{tag}\"");
+            Git($"push --set-upstream origin {branchName}");
+            Git("push --tags");
+        }
+    }
 
     private async Task ConvertFileFromPython2ToPython3Async(string filePath, HttpClient httpClient)
     {
