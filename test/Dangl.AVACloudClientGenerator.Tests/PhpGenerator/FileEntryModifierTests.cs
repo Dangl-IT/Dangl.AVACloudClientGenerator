@@ -21,6 +21,17 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
             Assert.Contains("\"guzzlehttp/guzzle\": \"^7.4.4\"", composerJsonContent);
             Assert.DoesNotContain("\"guzzlehttp/guzzle\": \"^6.2\"", composerJsonContent);
         }
+        
+        [Fact]
+        public async Task UsesNewUtilityMethodsForFileLoading()
+        {
+            using var sourceStream = await GetSourceZipArchiveStreamAsync();
+            var modifiedStream = await new FileEntryModifier(sourceStream).UpdatePhpPackageAsync();
+            var gaebConversionApiCode = GetFileContentForArchive(modifiedStream, "GaebConversionApi.php");
+
+            Assert.Contains("Utils::tryFopen", gaebConversionApiCode);
+            Assert.DoesNotContain("try_fopen", gaebConversionApiCode);
+        }
 
         private async Task<Stream> GetSourceZipArchiveStreamAsync()
         {

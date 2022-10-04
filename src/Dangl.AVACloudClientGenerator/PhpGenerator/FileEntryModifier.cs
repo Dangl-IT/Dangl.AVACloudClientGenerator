@@ -38,6 +38,25 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                         }
                     }
                 }
+
+                foreach (var entry in archive.Entries.ToList())
+                {
+                    if (entry.FullName.EndsWith(".php"))
+                    {
+                        using (var entryStream = entry.Open())
+                        {
+                            using (var correctedStream = await UpdateFileLoadMethodAsync(entryStream))
+                            {
+                                entry.Delete();
+                                var updateEntry = archive.CreateEntry(entry.FullName);
+                                using (var updatedEntryStream = updateEntry.Open())
+                                {
+                                    await correctedStream.CopyToAsync(updatedEntryStream);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             memStream.Position = 0;
             _zipArchiveStream.Position = 0;
@@ -75,6 +94,25 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 {
                     var jsonString = jObject.ToString();
                     await streamWriter.WriteAsync(jsonString);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> UpdateFileLoadMethodAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var fileContent = await streamReader.ReadToEndAsync();
+
+                fileContent = fileContent
+                    .Replace("\\GuzzleHttp\\Psr7\\try_fopen", "\\GuzzleHttp\\Psr7\\Utils::tryFopen");
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
+                {
+                    await streamWriter.WriteAsync(fileContent);
                 }
                 memStream.Position = 0;
                 return memStream;
