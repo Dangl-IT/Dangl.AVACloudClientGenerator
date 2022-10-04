@@ -18,7 +18,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             _zipArchiveStream = zipArchiveStream;
         }
 
-        public async Task<Stream> UpdateComposerJsonAsync()
+        public async Task<Stream> UpdatePhpPackageAsync()
         {
             var memStream = new MemoryStream();
             await _zipArchiveStream.CopyToAsync(memStream);
@@ -66,6 +66,9 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 keywords.Add("ava");
                 keywords.Add("dangl");
                 keywords.Add("bim");
+
+                // We're going with v7 of guzzle
+                jObject["require"]["guzzlehttp/guzzle"] = "^7.4.4";
 
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))

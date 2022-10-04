@@ -33,7 +33,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
             {
                 var composerJsonFileEntryModifier = new FileEntryModifier(generatedClientStream);
-                var updatedStream = await composerJsonFileEntryModifier.UpdateComposerJsonAsync();
+                var updatedStream = await composerJsonFileEntryModifier.UpdatePhpPackageAsync();
                 var readmeEntryModifier = new FileEntryModifier(updatedStream);
                 updatedStream = await readmeEntryModifier.UpdateReadmeAsync();
                 return updatedStream;
