@@ -18,7 +18,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             _zipArchiveStream = zipArchiveStream;
         }
 
-        public async Task<Stream> UpdateComposerJsonAsync()
+        public async Task<Stream> UpdatePhpPackageAsync()
         {
             var memStream = new MemoryStream();
             await _zipArchiveStream.CopyToAsync(memStream);
@@ -35,6 +35,25 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                         using (var updatedEntryStream = updateEntry.Open())
                         {
                             await correctedStream.CopyToAsync(updatedEntryStream);
+                        }
+                    }
+                }
+
+                foreach (var entry in archive.Entries.ToList())
+                {
+                    if (entry.FullName.EndsWith(".php"))
+                    {
+                        using (var entryStream = entry.Open())
+                        {
+                            using (var correctedStream = await UpdateFileLoadMethodAsync(entryStream))
+                            {
+                                entry.Delete();
+                                var updateEntry = archive.CreateEntry(entry.FullName);
+                                using (var updatedEntryStream = updateEntry.Open())
+                                {
+                                    await correctedStream.CopyToAsync(updatedEntryStream);
+                                }
+                            }
                         }
                     }
                 }
@@ -67,11 +86,39 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 keywords.Add("dangl");
                 keywords.Add("bim");
 
+                // We're going with v7 of guzzle
+                if (jObject["require"]["guzzlehttp/guzzle"].ToString() != "^6.2")
+                {
+                    throw new Exception("The client generator tried to update guzzle. However, a newer version was already encountered" +
+                        "in the package. The client generator needs to be manually checked and updated to be able to generate a PHP client again");
+                }
+
+                jObject["require"]["guzzlehttp/guzzle"] = "^7.4.4";
+
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
                     var jsonString = jObject.ToString();
                     await streamWriter.WriteAsync(jsonString);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> UpdateFileLoadMethodAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var fileContent = await streamReader.ReadToEndAsync();
+
+                fileContent = fileContent
+                    .Replace("\\GuzzleHttp\\Psr7\\try_fopen", "\\GuzzleHttp\\Psr7\\Utils::tryFopen");
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
+                {
+                    await streamWriter.WriteAsync(fileContent);
                 }
                 memStream.Position = 0;
                 return memStream;
