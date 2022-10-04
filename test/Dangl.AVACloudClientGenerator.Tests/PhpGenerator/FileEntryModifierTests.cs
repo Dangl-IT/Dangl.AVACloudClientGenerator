@@ -15,8 +15,7 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
         public async Task SetsGuzzleToV744()
         {
             using var sourceStream = await GetSourceZipArchiveStreamAsync();
-            var modifiedStream = await new FileEntryModifier(sourceStream).UpdatePhpPackageAsync();
-            var composerJsonContent = GetFileContentForArchive(modifiedStream, "composer.json");
+            var composerJsonContent = GetFileContentForArchive(sourceStream, "composer.json");
 
             Assert.Contains("\"guzzlehttp/guzzle\": \"^7.4.4\"", composerJsonContent);
             Assert.DoesNotContain("\"guzzlehttp/guzzle\": \"^6.2\"", composerJsonContent);
@@ -26,8 +25,7 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
         public async Task UsesNewUtilityMethodsForFileLoading()
         {
             using var sourceStream = await GetSourceZipArchiveStreamAsync();
-            var modifiedStream = await new FileEntryModifier(sourceStream).UpdatePhpPackageAsync();
-            var gaebConversionApiCode = GetFileContentForArchive(modifiedStream, "GaebConversionApi.php");
+            var gaebConversionApiCode = GetFileContentForArchive(sourceStream, "GaebConversionApi.php");
 
             Assert.Contains("Utils::tryFopen", gaebConversionApiCode);
             Assert.DoesNotContain("try_fopen", gaebConversionApiCode);

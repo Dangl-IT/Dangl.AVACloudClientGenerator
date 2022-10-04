@@ -87,6 +87,12 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 keywords.Add("bim");
 
                 // We're going with v7 of guzzle
+                if (jObject["require"]["guzzlehttp/guzzle"].ToString() != "^6.2")
+                {
+                    throw new Exception("The client generator tried to update guzzle. However, a newer version was already encountered" +
+                        "in the package. The client generator needs to be manually checked and updated to be able to generate a PHP client again");
+                }
+
                 jObject["require"]["guzzlehttp/guzzle"] = "^7.4.4";
 
                 var memStream = new MemoryStream();
