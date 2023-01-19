@@ -184,7 +184,7 @@ export interface FileParameter {
                 var originalFileContent = fileContent;
 
                 fileContent = fileContent
-                    .Replace("\"typescript\": \"^2.4.2\"", "\"typescript\": \"^3.4.3\"");
+                    .Replace("\"typescript\": \"^2.4.2\"", "\"typescript\": \"^4.9.4\"");
 
                 if (fileContent == originalFileContent)
                 {
