@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dangl.AVACloudClientGenerator.Utilities;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,6 +17,43 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
         public FileEntryModifier(Stream zipArchiveStream)
         {
             _zipArchiveStream = zipArchiveStream;
+        }
+
+        public async Task<Stream> GenerateOverloadsWithOptionsObjectAsync(Stream fileStream)
+        {
+            var memStream = new MemoryStream();
+            await fileStream.CopyToAsync(memStream);
+            memStream.Position = 0;
+            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, true))
+            {
+                var apiDefinitionEntry = archive.Entries.Single(e => e.FullName.EndsWith("api.ts"));
+                using var correctedEntryStream = new MemoryStream();
+                using (var entryStream = apiDefinitionEntry.Open())
+                {
+                    string updatedCode;
+                    using (var streamReader = new StreamReader(entryStream))
+                    {
+                        var originalCode = await streamReader.ReadToEndAsync();
+                        updatedCode = originalCode.GenerateMethodOverloadsWithOptionsObject();
+                    }
+
+                    using (var streamWriter = new StreamWriter(correctedEntryStream, Encoding.UTF8, 2048, true))
+                    {
+                        await streamWriter.WriteAsync(updatedCode);
+                    }
+                    correctedEntryStream.Position = 0;
+                }
+                apiDefinitionEntry.Delete();
+                var updatedEntry = archive.CreateEntry(apiDefinitionEntry.FullName);
+
+                using (var updatedEntrystream = updatedEntry.Open())
+                {
+                    await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                }
+            }
+            
+            memStream.Position = 0;
+            return memStream;
         }
 
         public async Task<Stream> ReplaceDanglIdentityOAuth2Accessor()

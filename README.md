@@ -25,6 +25,7 @@ Currently, the converter supports the following values for the `language` argume
 |-----------|----------|
 | `Java`    | Produces a Java 8 compatible client |
 | `TypeScriptNode`    | Produces a TypeScript / JavaScript package compatible with the NodeJs runtime |
+| `TypeScriptFetch`    | Produces a TypeScript / JavaScript package |
 | `JavaScript`    | Produces a JavaScript package to be used in browsers |
 | `Php`    | Produces a Php client |
 | `Python`    | Produces a Python client |
