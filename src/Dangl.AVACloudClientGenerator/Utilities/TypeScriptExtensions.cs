@@ -118,7 +118,7 @@ namespace Dangl.AVACloudClientGenerator.Utilities
 
             if (hasOptions)
             {
-                requestObject += "options: any, ";
+                requestObject += "options?: any, ";
             }
 
             requestObject = requestObject.TrimEnd().TrimEnd(',') + " }";
