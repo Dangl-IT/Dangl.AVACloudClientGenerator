@@ -1,4 +1,5 @@
 ﻿using Dangl.AVACloudClientGenerator.Shared;
+using Dangl.AVACloudClientGenerator.Utilities;
 using NSwag;
 using NSwag.CodeGeneration.TypeScript;
 using System;
@@ -35,6 +36,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptFetchGenerator
                 var clientEntry = zipArchive.CreateEntry("api.ts");
                 using (var entryStream = clientEntry.Open())
                 {
+                    code = code.GenerateMethodOverloadsWithOptionsObject();
                     using var streamWriter = new StreamWriter(entryStream);
                     await streamWriter.WriteAsync(code);
                 }
