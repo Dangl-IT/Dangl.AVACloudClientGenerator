@@ -104,6 +104,10 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
                     .Replace("siaFile?: Buffer", "siaFile: FileParameter") // Buffer doesnt include filename
                     .Replace("aslvFile?: Buffer", "aslvFile: FileParameter") // Buffer doesnt include filename
                     .Replace("avaFile?: Buffer", "avaFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("datanormFile?: Buffer", "datanormFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("uglFile?: Buffer", "uglFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("datanormFile: Buffer", "datanormFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("uglFile: Buffer", "uglFile: FileParameter") // Buffer doesnt include filename
                     + Environment.NewLine // The FileParameter should be used instead of a raw Buffer, otherwise
                                           // no filename is included in the request and AVACloud rejects the request with a 400 error
                     + @"

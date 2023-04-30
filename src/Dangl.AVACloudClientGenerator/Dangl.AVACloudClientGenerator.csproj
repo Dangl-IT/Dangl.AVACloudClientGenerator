@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="13.18.2" />
   </ItemGroup>
