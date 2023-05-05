@@ -167,7 +167,13 @@ class Build : NukeBuild
         StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
             .AssertZeroExitCode();
 
-        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip");
+        var zipOutputPath = outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
+        if (File.Exists(zipOutputPath))
+        {
+            DeleteFile(zipOutputPath);
+        }
+
+        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
     }
 
     Target GenerateAndPublishTypeScriptNpmClient => _ => _
@@ -242,6 +248,7 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             await GenerateAndPushPythonCode("master", PythonClientRepositoryTag, false);
+            EnsureCleanDirectory(OutputDirectory);
             await GenerateAndPushPythonCode("python3", $"{PythonClientRepositoryTag}-V3", true);
         });
 
@@ -343,7 +350,7 @@ class Build : NukeBuild
         var responseHtml = await response.Content.ReadAsStringAsync();
         var htmlDoc = new HtmlAgilityPack.HtmlDocument();
         htmlDoc.LoadHtml(responseHtml);
-        var python3Code = htmlDoc.DocumentNode.SelectSingleNode("//textarea[@id='result']").InnerText;
+        var python3Code = htmlDoc.DocumentNode.SelectSingleNode("//textarea[@id='result-val']").InnerText;
         python3Code = HttpUtility.HtmlDecode(python3Code);
 
         WriteAllText(filePath, python3Code);
