@@ -233,7 +233,16 @@ class Build : NukeBuild
 
             if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
             {
-                Npm($"version {NodePublishVersionOverride}", clientDir);
+                try
+                {
+                    Npm($"version {NodePublishVersionOverride}", clientDir);
+                }
+                catch
+                {
+                    // We're ignoring errors when setting the version, since it could happen
+                    // that the auto generated one matches the one we're specifying, and that would
+                    // result in an error from npm since the version wasn't changed.
+                }
             }
 
             NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
