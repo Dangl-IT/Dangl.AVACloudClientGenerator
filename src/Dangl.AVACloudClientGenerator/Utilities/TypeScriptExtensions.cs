@@ -112,7 +112,7 @@ namespace Dangl.AVACloudClientGenerator.Utilities
             var requestObject = "{ ";
             for (var i = 1; i < parameters.Count; i++)
             {
-                var parameter = parameters[i].Value;
+                var parameter = parameters[i].Value.Replace(":", "?:");
                 requestObject += parameter + ", ";
             }
 
@@ -123,11 +123,11 @@ namespace Dangl.AVACloudClientGenerator.Utilities
 
             requestObject = requestObject.TrimEnd().TrimEnd(',') + " }";
 
-            method = $"    {(hasUsedPublicIdentifier ? "public " : string.Empty)}{methodName}WithRequestObject({parameters[0].Value}, options: {requestObject}): {returnObject} {{{Environment.NewLine}";
+            method = $"    {(hasUsedPublicIdentifier ? "public " : string.Empty)}{methodName}WithRequestObject({parameters[0].Value}, options?: {requestObject}): {returnObject} {{{Environment.NewLine}";
 
             var callingParameters = parameters
                 .Select(p => Regex.Match(p.Value, "^[a-zA-Z]+").Value)
-                .Select((parameterName, i) => i == 0 ? parameterName : $"options.{parameterName}")
+                .Select((parameterName, i) => i == 0 ? parameterName : $"options?.{parameterName}")
                 .Aggregate((c, n) => c + ", " + n);
             if (hasOptions)
             {
