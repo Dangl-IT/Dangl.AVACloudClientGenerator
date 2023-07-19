@@ -112,7 +112,11 @@ namespace Dangl.AVACloudClientGenerator.Utilities
             var requestObject = "{ ";
             for (var i = 1; i < parameters.Count; i++)
             {
-                var parameter = parameters[i].Value.Replace(":", "?:");
+                var parameter = parameters[i].Value;
+                if (!parameter.Contains("?"))
+                {
+                    parameter = parameter.Replace(":", "?:");
+                }
                 requestObject += parameter + ", ";
             }
 
@@ -131,7 +135,7 @@ namespace Dangl.AVACloudClientGenerator.Utilities
                 .Aggregate((c, n) => c + ", " + n);
             if (hasOptions)
             {
-                callingParameters += ", options.options || {}";
+                callingParameters += ", options?.options || {}";
             }
 
             method += $"      return this.{methodName}({callingParameters});{Environment.NewLine}";
