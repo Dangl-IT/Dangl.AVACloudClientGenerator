@@ -13,7 +13,7 @@ namespace Dangl.AVACloudClientGenerator.PythonGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Dictionary<string, object>> GetTypescriptNodeClientGeneratorOptionsAsync(string swaggerDocumentUri)
+        public async Task<Dictionary<string, object>> GetPythonClientGeneratorOptionsAsync(string swaggerDocumentUri)
         {
             var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync(swaggerDocumentUri);
             return new Dictionary<string, object>

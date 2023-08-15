@@ -39,7 +39,7 @@ namespace Dangl.AVACloudClientGenerator.PythonGenerator
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var typeScriptNodeClientOptions = await _optionsGenerator.GetTypescriptNodeClientGeneratorOptionsAsync(swaggerDocumentUri);
+            var typeScriptNodeClientOptions = await _optionsGenerator.GetPythonClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
                 swaggerUrl = swaggerDocumentUri,
