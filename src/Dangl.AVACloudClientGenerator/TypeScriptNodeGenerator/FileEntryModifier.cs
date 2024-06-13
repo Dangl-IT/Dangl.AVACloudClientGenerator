@@ -125,7 +125,7 @@ export interface FileParameter {
                 // 1. The 'ObjectSerializer.serialize() method does not correctly work with the abstract IElementDto. It only serializes the shared
                 // properties, thus missing all properties not present on the shared, abstract base class
                 // 2. Additionally, the generated code was missing the option 'json: true' when sending requests, so the serializer 
-                // form the 'requests' package threw an exception
+                // from the 'requests' package threw an exception
                 typeScriptCode = Regex.Replace(typeScriptCode, "([ ]+)body: ObjectSerializer\\.serialize\\(([a-zA-Z]+), \"ProjectDto\"\\)", "$1body: $2,\r\n$1json: true");
 
                 // The following fixes the deserialization of the returned data if it's a ProjectDto
