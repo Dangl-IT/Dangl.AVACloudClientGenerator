@@ -3,10 +3,9 @@ using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.AzureKeyVault.Attributes;
+using Nuke.Common.Tools.AzureKeyVault;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
 using System;
@@ -16,9 +15,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
-using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.IO.TextTasks;
 using static Nuke.Common.Tooling.ProcessTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -30,15 +27,17 @@ class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.GenerateAndPublishPythonClient);
 
-    [KeyVaultSettings(
+    [AzureKeyVaultConfiguration(
         BaseUrlParameterName = nameof(KeyVaultBaseUrl),
         ClientIdParameterName = nameof(KeyVaultClientId),
-        ClientSecretParameterName = nameof(KeyVaultClientSecret))]
-    readonly KeyVaultSettings KeyVaultSettings;
+        ClientSecretParameterName = nameof(KeyVaultClientSecret),
+        TenantIdParameterName = nameof(KeyVaultTenantId))]
+    readonly AzureKeyVaultConfiguration KeyVaultSettings;
 
     [Parameter] readonly string KeyVaultBaseUrl;
     [Parameter] readonly string KeyVaultClientId;
     [Parameter] readonly string KeyVaultClientSecret;
+    [Parameter] readonly string KeyVaultTenantId;
     [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
@@ -50,7 +49,7 @@ class Build : NukeBuild
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
-    [KeyVaultSecret] readonly string GitHubAuthenticationToken;
+    [AzureKeyVaultSecret] readonly string GitHubAuthenticationToken;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath OutputDirectory => RootDirectory / "output";
@@ -58,9 +57,9 @@ class Build : NukeBuild
     Target Clean => _ => _
         .Executes(() =>
         {
-            GlobDirectories(SourceDirectory, "**/bin", "**/obj").ForEach(DeleteDirectory);
-            GlobDirectories(RootDirectory / "test", "**/bin", "**/obj").ForEach(DeleteDirectory);
-            EnsureCleanDirectory(OutputDirectory);
+            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(d => d.DeleteDirectory());
+            (RootDirectory / "test").GlobDirectories("**/bin", "**/obj").ForEach(d => d.DeleteDirectory());
+            OutputDirectory.CreateOrCleanDirectory();
         });
 
     Target Restore => _ => _
@@ -86,7 +85,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var testProjects = GlobFiles(RootDirectory / "test", "**/*.csproj");
+            var testProjects = (RootDirectory / "test").GlobFiles("**/*.csproj");
             var testRun = 1;
             foreach (var testProject in testProjects)
             {
@@ -127,7 +126,7 @@ class Build : NukeBuild
 
             var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
 
-            var artifactPaths = new string[] { zipPath }.Concat(GlobFiles(OutputDirectory, "*.zip")).Distinct().ToArray();
+            var artifactPaths = new string[] { zipPath }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
 
             await PublishRelease(x => x
                 .SetArtifactPaths(artifactPaths)
@@ -170,7 +169,7 @@ class Build : NukeBuild
         var zipOutputPath = outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
         if (File.Exists(zipOutputPath))
         {
-            DeleteFile(zipOutputPath);
+            ((AbsolutePath)zipOutputPath).DeleteFile();
         }
 
         System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
@@ -266,7 +265,7 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             await GenerateAndPushPythonCode("master", PythonClientRepositoryTag, false);
-            EnsureCleanDirectory(OutputDirectory);
+            OutputDirectory.CreateOrCleanDirectory();
             await GenerateAndPushPythonCode("python3", $"{PythonClientRepositoryTag}-V3", true);
         });
 
@@ -277,8 +276,8 @@ class Build : NukeBuild
         var clientRoot = OutputDirectory / "Python";
         var clientDir = clientRoot / "python-client";
         
-        EnsureCleanDirectory(clientRoot);
-        EnsureCleanDirectory(clientDir);
+        clientRoot.CreateOrCleanDirectory();
+        clientDir.CreateOrCleanDirectory();
 
         GenerateClient("Python");
 
@@ -305,7 +304,7 @@ class Build : NukeBuild
         // Delete all but .git/ in cloned repo
         var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
             .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
-        dirs.ForEach(DeleteDirectory);
+        dirs.ForEach(d => ((AbsolutePath)d).DeleteDirectory());
         var files = Directory.EnumerateFiles(mirrorRepoDir)
             .ToList();
         files.ForEach(File.Delete);
@@ -328,7 +327,7 @@ class Build : NukeBuild
         if (transformToV3)
         {
             // Now, we also want to ensure that we have a Python3 client available
-            var pythonSourceFiles = GlobFiles(mirrorRepoDir, "**/*.py");
+            var pythonSourceFiles = mirrorRepoDir.GlobFiles("**/*.py");
             using var httpClient = new HttpClient();
             Serilog.Log.Information($"Transforming {pythonSourceFiles.Count} source files to Python3");
             var conversionTasks = new List<Task>();
@@ -340,7 +339,7 @@ class Build : NukeBuild
             await Task.WhenAll(conversionTasks);
         }
 
-        using (SwitchWorkingDirectory(mirrorRepoDir))
+        using (mirrorRepoDir.SwitchWorkingDirectory())
         {
             Git("add -A");
             var commitMessage = "Auto generated commit";
@@ -351,9 +350,9 @@ class Build : NukeBuild
         }
     }
 
-    private async Task ConvertFileFromPython2ToPython3Async(string filePath, HttpClient httpClient)
+    private async Task ConvertFileFromPython2ToPython3Async(AbsolutePath filePath, HttpClient httpClient)
     {
-        var python2Code = ReadAllText(filePath);
+        var python2Code = filePath.ReadAllText();
 
         var formValue = new Dictionary<string, string>
         {
@@ -371,7 +370,7 @@ class Build : NukeBuild
         var python3Code = htmlDoc.DocumentNode.SelectSingleNode("//textarea[@id='result-val']").InnerText;
         python3Code = HttpUtility.HtmlDecode(python3Code);
 
-        WriteAllText(filePath, python3Code);
+        filePath.WriteAllText(python3Code);
     }
 
     Target GenerateAndPublishPhpClient => _ => _
@@ -380,14 +379,14 @@ class Build : NukeBuild
         {
             GenerateClient("Php");
 
-            var composerJsonFile = GlobFiles(OutputDirectory, "**/*composer.json").Single();
-            var composerJson = ReadAllText(composerJsonFile);
+            var composerJsonFile = OutputDirectory.GlobFiles("**/*composer.json").Single();
+            var composerJson = composerJsonFile.ReadAllText();
             var composerJObject = JObject.Parse(composerJson);
             var composerVersion = string.IsNullOrWhiteSpace(PhpClientRepositoryTag)
                 ? GitVersion.NuGetVersion
                 : PhpClientRepositoryTag;
             composerJObject["version"] = composerVersion;
-            WriteAllText(composerJsonFile, composerJObject.ToString());
+            composerJsonFile.WriteAllText(composerJObject.ToString());
 
 
             var clientRoot = OutputDirectory / "Php";
@@ -414,7 +413,7 @@ class Build : NukeBuild
             // Delete all but .git/ in cloned repo
             var dirs = Directory.EnumerateDirectories(mirrorRepoDir)
                 .Where(d => !d.EndsWith(".git", StringComparison.OrdinalIgnoreCase));
-            dirs.ForEach(DeleteDirectory);
+            dirs.ForEach(d => ((AbsolutePath)d).DeleteDirectory());
             var files = Directory.EnumerateFiles(mirrorRepoDir)
                 .ToList();
             files.ForEach(File.Delete);
@@ -440,7 +439,8 @@ class Build : NukeBuild
                 phpClientTag =$"v{GitVersion.NuGetVersion}";
             }
 
-            using (SwitchWorkingDirectory(mirrorRepoDir))
+
+            using (mirrorRepoDir.SwitchWorkingDirectory())
             {
                 Git("add -A");
                 var commitMessage = "Auto generated commit";
