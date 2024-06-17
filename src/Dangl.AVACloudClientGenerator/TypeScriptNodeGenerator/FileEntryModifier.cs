@@ -1,4 +1,4 @@
-﻿using Dangl.AVACloudClientGenerator.Utilities;
+using Dangl.AVACloudClientGenerator.Utilities;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -152,7 +152,7 @@ export interface FileParameter {
             }
         }
 
-        public async Task<Stream> EnableCommentsInTsconfig(Stream fileStream)
+        public async Task<Stream> EnableCommentsInTsConfig(Stream fileStream)
         {
             var memStream = new MemoryStream();
             await fileStream.CopyToAsync(memStream);
