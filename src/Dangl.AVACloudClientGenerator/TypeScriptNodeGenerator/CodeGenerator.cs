@@ -287,7 +287,7 @@ Starting with version **1.30.0**, the package dropped external dependencies and 
             using var entryStream = entry.Open();
             using var streamWriter = new StreamWriter(entryStream);
             var content = @"{
-  ""name"": ""@dangl/avacloud-client-fetch"",
+  ""name"": ""@dangl/avacloud-client-node"",
   ""version"": ""1.0.0"",
   ""description"": ""AVACloud client"",
   ""author"": ""Dangl IT GmbH"",
