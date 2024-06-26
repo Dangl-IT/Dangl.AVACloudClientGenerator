@@ -1,4 +1,4 @@
-using Dangl.AVACloudClientGenerator.Shared;
+﻿using Dangl.AVACloudClientGenerator.Shared;
 using Dangl.AVACloudClientGenerator.Utilities;
 using NSwag;
 using NSwag.CodeGeneration.TypeScript;
@@ -233,7 +233,16 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptFetchGenerator
             var entry = zipArchive.CreateEntry("README.md");
             using var entryStream = entry.Open();
             using var streamWriter = new StreamWriter(entryStream);
-            var content = ReadmeFactory.GetReadmeContent();
+            var packageReadmeDetails = @"#Update Notice
+
+Starting with version **1.30.0**, the package dropped external dependencies and did some refactoring to the code. The following changes are required:
+* `FileParameter` now uses `data` instead of `value` for the file content
+* `FileParameter` now uses `fileName` instead of `options.filename` for the file name
+* All responses are now wrapped in a response object, making it easier to access e.g. returned headers or status codes
+* File responses now return a `Blob` instead of an `Buffer`, and are accessible via `response.result` instead of `response.body`
+
+";
+            var content = ReadmeFactory.GetReadmeContent(packageDetails: packageReadmeDetails);
             await streamWriter.WriteAsync(content);
         }
 
