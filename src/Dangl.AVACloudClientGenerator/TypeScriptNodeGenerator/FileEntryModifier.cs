@@ -1,4 +1,4 @@
-using Dangl.AVACloudClientGenerator.Utilities;
+﻿using Dangl.AVACloudClientGenerator.Utilities;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -110,6 +110,8 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
                     .Replace("uglFile: Buffer", "uglFile: FileParameter") // Buffer doesnt include filename
                     .Replace("idsConnectFile?: Buffer", "idsConnectFile: FileParameter") // Buffer doesnt include filename
                     .Replace("idsConnectFile: Buffer", "idsConnectFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("xrechnungFile?: Buffer", "xrechnungFile: FileParameter") // Buffer doesnt include filename
+                    .Replace("xrechnungFile: Buffer", "xrechnungFile: FileParameter") // Buffer doesnt include filename
                     + Environment.NewLine // The FileParameter should be used instead of a raw Buffer, otherwise
                                           // no filename is included in the request and AVACloud rejects the request with a 400 error
                     + @"
@@ -127,20 +129,37 @@ export interface FileParameter {
                 // 2. Additionally, the generated code was missing the option 'json: true' when sending requests, so the serializer 
                 // from the 'requests' package threw an exception
                 typeScriptCode = Regex.Replace(typeScriptCode, "([ ]+)body: ObjectSerializer\\.serialize\\(([a-zA-Z]+), \"ProjectDto\"\\)", "$1body: $2,\r\n$1json: true");
+                typeScriptCode = Regex.Replace(typeScriptCode, "([ ]+)body: ObjectSerializer\\.serialize\\(([a-zA-Z]+), \"Invoice\"\\)", "$1body: $2,\r\n$1json: true");
+                typeScriptCode = Regex.Replace(typeScriptCode, "([ ]+)body: ObjectSerializer\\.serialize\\(([a-zA-Z]+), \"AvaProjectWrapper\"\\)", "$1body: $2,\r\n$1json: true");
 
                 // The following fixes the deserialization of the returned data if it's a ProjectDto
                 // The generated Swagger code does not produce correct results for Enumerations, instead
                 // they're mapped to an object, thus the serialization produces a format that is rejected
                 // by the AVACloud API endpoint
+
+                var objectsToDirectlyReturn = new[]
+                {
+                    "ProjectDto",
+                    "Invoice",
+                    "AvaProjectWrapper"
+                };
+                var deserializationCode = string.Empty;
+                foreach (var objectType in objectsToDirectlyReturn)
+                {
+                    deserializationCode+= $"\r\n        if (type === '{objectType}') {{"
+                    + "\r\n            return data;"
+                    + "\r\n        }";
+                }
+
                 typeScriptCode = typeScriptCode.Replace("public static deserialize(data: any, type: string) {",
                     "public static deserialize(data: any, type: string) {"
-                    + "\r\n        if (type === 'ProjectDto') {"
-                    + "\r\n            return data;"
-                    + "\r\n        }");
+                    + deserializationCode);
 
                 // There's been a bug in the generated code where the localVarRequestOptions object
                 // had the attribute for Json set twice
                 typeScriptCode = Regex.Replace(typeScriptCode, "json: true,(\r\n?|\n)\\s+body: avaProject,(\r\n?|\n)\\s+json: true", "json: true,\r\n            body: avaProject");
+                typeScriptCode = Regex.Replace(typeScriptCode, "json: true,(\r\n?|\n)\\s+body: invoice,(\r\n?|\n)\\s+json: true", "json: true,\r\n            body: invoice");
+                typeScriptCode = Regex.Replace(typeScriptCode, "json: true,(\r\n?|\n)\\s+body: avaWrapper,(\r\n?|\n)\\s+json: true", "json: true,\r\n            body: avaWrapper");
 
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
