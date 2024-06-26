@@ -1,4 +1,4 @@
-﻿using Dangl.AVACloudClientGenerator.Shared;
+using Dangl.AVACloudClientGenerator.Shared;
 using Dangl.AVACloudClientGenerator.Utilities;
 using NSwag;
 using NSwag.CodeGeneration.TypeScript;
@@ -217,7 +217,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptFetchGenerator
             code = updatedCode;
 
             // 5. We need to provide a default value for 'fetch' if nothing is given
-            updatedCode = code.Replace("this.http = http ? http : window as any;", "this.http = http ? http : { fetch };");
+            updatedCode = code.Replace("this.http = http ? http : window as any;", "this.http = http ? http : (typeof window !== 'undefined' ? window : { fetch });");
             if (updatedCode == code)
             {
                 throw new Exception("Failed to add the default fetch implementation to the code. This is unexpected, likely the NSwag template has changed.");
