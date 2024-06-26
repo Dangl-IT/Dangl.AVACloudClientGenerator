@@ -35,10 +35,6 @@ namespace Dangl.AVACloudClientGenerator
 
                 case ClientLanguage.TypeScriptNode:
                     await GenerateTypeScriptNodeClient(swaggerDocumentUri);
-                    break;
-
-                case ClientLanguage.TypeScriptFetch:
-                    await GenerateTypeScriptFetchClient(swaggerDocumentUri);
                     shouldAddReadme = false;
                     break;
 
@@ -70,14 +66,7 @@ namespace Dangl.AVACloudClientGenerator
 
         private async Task GenerateTypeScriptNodeClient(string swaggerDocumentUri)
         {
-            var typeScriptNodeOptionsGenerator = new TypeScriptNodeGenerator.OptionsGenerator(_avaCloudVersion);
-            var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(typeScriptNodeOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
-        }
-
-        private async Task GenerateTypeScriptFetchClient(string swaggerDocumentUri)
-        {
-            var typeScriptNodeGenerator = new TypeScriptFetchGenerator.CodeGenerator(_avaCloudVersion);
+            var typeScriptNodeGenerator = new TypeScriptNodeGenerator.CodeGenerator(_avaCloudVersion);
             _zippedClientCodeStream = await typeScriptNodeGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 

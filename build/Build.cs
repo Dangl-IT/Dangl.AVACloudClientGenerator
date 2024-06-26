@@ -142,7 +142,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java", "TypeScriptNode", "TypeScriptFetch", "JavaScript", "Php", "Python" };
+            var languages = new[] { "Java", "TypeScriptNode", "JavaScript", "Php", "Python" };
 
             foreach (var language in languages)
             {
@@ -182,29 +182,6 @@ class Build : NukeBuild
             GenerateClient("TypeScriptNode");
 
             var clientRoot = OutputDirectory / "TypeScriptNode";
-            var clientDir = clientRoot / "typescript-node-client";
-
-            CopyFile(clientRoot / "README.md", clientDir / "README.md");
-            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
-
-            if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
-            {
-                Npm($"version {NodePublishVersionOverride}", clientDir);
-            }
-
-            NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
-            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
-
-            Npm("publish --access=public", clientDir);
-        });
-    
-    Target GenerateAndPublishTypeScriptFetchNpmClient => _ => _
-        .DependsOn(Compile)
-        .Executes(() =>
-        {
-            GenerateClient("TypeScriptFetch");
-
-            var clientRoot = OutputDirectory / "TypeScriptFetch";
 
             if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
             {

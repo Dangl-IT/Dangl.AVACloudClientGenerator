@@ -3,9 +3,9 @@ using NSwag.CodeGeneration.OperationNameGenerators;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Dangl.AVACloudClientGenerator.TypeScriptFetchGenerator
+namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
 {
-    public class TypeScriptFetchClientOperationNameGenerator : IOperationNameGenerator
+    public class TypeScriptNodeClientOperationNameGenerator : IOperationNameGenerator
     {
         public bool SupportsMultipleClients => true;
 
