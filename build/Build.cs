@@ -320,8 +320,8 @@ class Build : NukeBuild
         {
             Git("add -A");
             var commitMessage = "Auto generated commit";
-            Git($"commit -m \"{commitMessage}\"");
-            Git($"tag \"{tag}\"");
+            Git($"commit -m {commitMessage}");
+            Git($"tag {tag}");
             Git($"push --set-upstream origin {branchName}");
             Git("push --tags");
         }
