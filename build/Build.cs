@@ -242,8 +242,6 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             await GenerateAndPushPythonCode("master", PythonClientRepositoryTag, false);
-
-            return;
             OutputDirectory.CreateOrCleanDirectory();
             await GenerateAndPushPythonCode("python3", $"{PythonClientRepositoryTag}-V3", true);
         });
@@ -254,7 +252,7 @@ class Build : NukeBuild
     {
         var clientRoot = OutputDirectory / "Python";
         var clientDir = clientRoot / "python-client";
-        
+
         clientRoot.CreateOrCleanDirectory();
         clientDir.CreateOrCleanDirectory();
 
@@ -318,15 +316,12 @@ class Build : NukeBuild
             }
         }
 
-        using (mirrorRepoDir.SwitchWorkingDirectory())
-        {
-            Git("add -A");
-            var commitMessage = "Auto generated commit";
-            Git($"commit -m {commitMessage}");
-            Git($"tag {tag}");
-            Git($"push --set-upstream origin {branchName}");
-            Git("push --tags");
-        }
+        Git("add -A", workingDirectory: mirrorRepoDir);
+        var commitMessage = "Auto generated commit";
+        Git($"commit -m {commitMessage}", workingDirectory: mirrorRepoDir);
+        Git($"tag {tag}", workingDirectory: mirrorRepoDir);
+        Git($"push --set-upstream origin {branchName}", workingDirectory: mirrorRepoDir);
+        Git("push --tags", workingDirectory: mirrorRepoDir);
     }
 
     private async Task ConvertFileFromPython2ToPython3Async(AbsolutePath filePath, HttpClient httpClient)
