@@ -142,7 +142,15 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var languages = new[] { "Java", "TypeScriptNode", "JavaScript", "Php", "Python" };
+            var languages = new[]
+            { 
+                "Java",
+                "TypeScriptNode",
+                // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
+                // "JavaScript",
+                "Php",
+                "Python"
+            };
 
             foreach (var language in languages)
             {
