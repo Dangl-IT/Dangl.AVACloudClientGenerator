@@ -307,13 +307,13 @@ class Build : NukeBuild
             var pythonSourceFiles = mirrorRepoDir.GlobFiles("**/*.py");
             using var httpClient = new HttpClient();
             Serilog.Log.Information($"Transforming {pythonSourceFiles.Count} source files to Python3");
-            var conversionTasks = new List<Task>();
             foreach (var pythonSourceFile in pythonSourceFiles)
             {
-                conversionTasks.Add(ConvertFileFromPython2ToPython3Async(pythonSourceFile, httpClient));
+                // We're converting them serially, since there seems to be some rate limiting on the service
+                // we're using to convert to Python3 otherwise.
+                Serilog.Log.Information("Converting file to Python3: " + pythonSourceFile.ToString());
+                await ConvertFileFromPython2ToPython3Async(pythonSourceFile, httpClient);
             }
-
-            await Task.WhenAll(conversionTasks);
         }
 
         using (mirrorRepoDir.SwitchWorkingDirectory())
