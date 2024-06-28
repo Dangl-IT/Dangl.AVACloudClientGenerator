@@ -47,7 +47,7 @@ namespace Dangl.AVACloudClientGenerator.Utilities
                         currentComment = string.Empty;
                     }
 
-                    updatedApiContent += line;
+                    updatedApiContent += line + Environment.NewLine;
                 }
                 else
                 {

@@ -4,7 +4,6 @@
     {
         Java,
         TypeScriptNode,
-        TypeScriptFetch,
         JavaScript,
         Php,
         Python

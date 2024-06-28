@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Build Schema",
   "$ref": "#/definitions/build",
+  "title": "Build Schema",
   "definitions": {
     "build": {
       "type": "object",
@@ -53,6 +53,9 @@
         "KeyVaultClientSecret": {
           "type": "string"
         },
+        "KeyVaultTenantId": {
+          "type": "string"
+        },
         "NodePublishVersionOverride": {
           "type": "string"
         },
@@ -96,7 +99,6 @@
               "GenerateAndPublishJavaScriptNpmClient",
               "GenerateAndPublishPhpClient",
               "GenerateAndPublishPythonClient",
-              "GenerateAndPublishTypeScriptFetchNpmClient",
               "GenerateAndPublishTypeScriptNpmClient",
               "GenerateClients",
               "Publish",
@@ -116,7 +118,6 @@
               "GenerateAndPublishJavaScriptNpmClient",
               "GenerateAndPublishPhpClient",
               "GenerateAndPublishPythonClient",
-              "GenerateAndPublishTypeScriptFetchNpmClient",
               "GenerateAndPublishTypeScriptNpmClient",
               "GenerateClients",
               "Publish",

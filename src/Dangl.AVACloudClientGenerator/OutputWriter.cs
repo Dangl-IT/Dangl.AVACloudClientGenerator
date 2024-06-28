@@ -16,7 +16,7 @@ namespace Dangl.AVACloudClientGenerator
             _outputPathFolder = outputPathFolder;
         }
 
-        public async Task WriteCodeToDirectoryAndAddReadmeAndLicense()
+        public async Task WriteCodeToDirectoryAndAddReadmeAndLicense(bool shouldAddReadme)
         {
             using (var zipArchive = new System.IO.Compression.ZipArchive(_generatedCodeZipArchiveStream))
             {
@@ -26,8 +26,11 @@ namespace Dangl.AVACloudClientGenerator
                 }
             }
 
-            var readmeText = ReadmeFactory.GetReadmeContent();
-            await WriteTextFile("README.md", readmeText);
+            if (shouldAddReadme)
+            {
+                var readmeText = ReadmeFactory.GetReadmeContent(packageDetails: null);
+                await WriteTextFile("README.md", readmeText);
+            }
             var licenseText = LicenseFactory.GetLicenseContent();
             await WriteTextFile("LICENSE.md", licenseText);
         }
