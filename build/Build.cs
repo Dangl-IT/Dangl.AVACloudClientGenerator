@@ -242,6 +242,8 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             await GenerateAndPushPythonCode("master", PythonClientRepositoryTag, false);
+
+            return;
             OutputDirectory.CreateOrCleanDirectory();
             await GenerateAndPushPythonCode("python3", $"{PythonClientRepositoryTag}-V3", true);
         });
