@@ -413,15 +413,11 @@ class Build : NukeBuild
                 phpClientTag =$"v{GitVersion.NuGetVersion}";
             }
 
-
-            using (mirrorRepoDir.SwitchWorkingDirectory())
-            {
-                Git("add -A");
-                var commitMessage = "Auto generated commit";
-                Git($"commit -m \"{commitMessage}\"");
-                Git($"tag \"{phpClientTag}\"");
-                Git($"push --set-upstream origin {mirrorBranchName}");
-                Git("push --tags");
-            }
+            Git("add -A", workingDirectory: mirrorRepoDir);
+            var commitMessage = "Auto generated commit";
+            Git($"commit -m {commitMessage}", workingDirectory: mirrorRepoDir);
+            Git($"tag {phpClientTag}", workingDirectory: mirrorRepoDir);
+            Git($"push --set-upstream origin {mirrorBranchName}", workingDirectory: mirrorRepoDir);
+            Git("push --tags", workingDirectory: mirrorRepoDir);
         });
 }
