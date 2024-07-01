@@ -101,6 +101,7 @@
               "GenerateAndPublishPythonClient",
               "GenerateAndPublishTypeScriptNpmClient",
               "GenerateClients",
+              "GenerateVersion",
               "Publish",
               "Restore",
               "Test"
@@ -120,6 +121,7 @@
               "GenerateAndPublishPythonClient",
               "GenerateAndPublishTypeScriptNpmClient",
               "GenerateClients",
+              "GenerateVersion",
               "Publish",
               "Restore",
               "Test"
