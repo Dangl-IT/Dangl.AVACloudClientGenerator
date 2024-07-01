@@ -11,6 +11,7 @@ namespace Dangl.AVACloudClientGenerator
         {
             HeadingInfo.Default.WriteMessage("Visit https://www.dangl-it.com to find out more about AVACloud");
             HeadingInfo.Default.WriteMessage("This generator is available on GitHub: https://github.com/Dangl-IT/Dangl.AVACloudClientGenerator");
+            HeadingInfo.Default.WriteMessage("Version: " + VersionsService.Version);
             var parsedOptions = Parser.Default.ParseArguments<ClientGeneratorOptions>(args);
             if (parsedOptions.Tag == ParserResultType.Parsed)
             {
