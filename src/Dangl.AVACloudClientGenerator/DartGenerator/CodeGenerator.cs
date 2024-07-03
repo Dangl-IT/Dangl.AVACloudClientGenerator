@@ -35,10 +35,10 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
 
         private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
         {
-            var typeScriptNodeClientOptions = await _optionsGenerator.GetPythonClientGeneratorOptionsAsync(swaggerDocumentUri);
+            var typeScriptNodeClientOptions = await _optionsGenerator.GetDartClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
-                swaggerUrl = swaggerDocumentUri,
+                openAPIUrl = swaggerDocumentUri,
                 options = typeScriptNodeClientOptions
             };
 
@@ -48,7 +48,7 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
             };
             var generatorOptionsJson = JsonConvert.SerializeObject(generatorOptions, camelCaseSerializerSettings);
 
-            var url = Constants.SWAGGER_GENERATOR_CLIENT_GEN_ENDPOINT + SWAGGER_GENERATOR_LANGUAGE_PARAM;
+            var url = Constants.OPENAPI_GENERATOR_CLIENT_GEN_ENDPOINT + SWAGGER_GENERATOR_LANGUAGE_PARAM;
 
             return new HttpRequestMessage(HttpMethod.Post, url)
             {

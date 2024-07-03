@@ -13,12 +13,15 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Dictionary<string, object>> GetPythonClientGeneratorOptionsAsync(string swaggerDocumentUri)
+        public async Task<Dictionary<string, object>> GetDartClientGeneratorOptionsAsync(string swaggerDocumentUri)
         {
             var avaCloudVersion = await _avaCloudVersion.GetAvaCloudVersionAsync(swaggerDocumentUri);
             return new Dictionary<string, object>
             {
-                { "pubName", "avacloud-client-dart" },
+                { "pubAuthorEmail", "info@dangl-it.com" },
+                { "pubAuthor", "Dangl IT GmbH" },
+                { "pubLibrary", "avacloud_client_dart" },
+                { "pubName", "avacloud_client_dart" },
                 { "pubVersion", avaCloudVersion }
             };
         }
