@@ -6,6 +6,7 @@
         TypeScriptNode,
         JavaScript,
         Php,
-        Python
+        Python,
+        Dart
     }
 }

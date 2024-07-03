@@ -178,7 +178,8 @@ namespace Dangl.AVACloudClientGenerator
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
                 // "JavaScript",
                 "Php",
-                "Python"
+                "Python",
+                "Dart"
             };
 
             foreach (var language in languages)
