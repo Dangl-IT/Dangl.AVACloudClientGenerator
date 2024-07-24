@@ -37,6 +37,20 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                         }
                     }
                 }
+
+                var apiErrorClassEntry = archive.Entries.Single(e => e.FullName.EndsWith("api_error.dart"));
+                using (var entryStream = apiErrorClassEntry.Open())
+                {
+                    using (var correctedEntryStream = await FixApiErrorDeserializationAsync(entryStream))
+                    {
+                        apiErrorClassEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(apiErrorClassEntry.FullName);
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
             }
             memStream.Position = 0;
             return memStream;
@@ -60,6 +74,33 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                 if (dartCode == updatedDartCode)
                 {
                       throw new InvalidOperationException("The code could not be updated");
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(updatedDartCode);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> FixApiErrorDeserializationAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var dartCode = await streamReader.ReadToEndAsync();
+
+                // We're actually deserializing into an array, this seems to be not working properly in the generated
+                // code for an array of enums
+                var updatedDartCode = dartCode.Replace(": mapCastOfType<String, List>(json, r'errors'),",
+                    @": (json[r'errors'] as Map<String, dynamic>).map(
+              (key, value) => MapEntry(key, List<String>.from(value as List))),");
+
+                if (dartCode == updatedDartCode)
+                {
+                    throw new InvalidOperationException("The code could not be updated");
                 }
 
                 var memStream = new MemoryStream();
