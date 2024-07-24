@@ -51,6 +51,17 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                         }
                     }
                 }
+
+                var allEntries = archive.Entries.Where(e => e.FullName.EndsWith(".dart")).ToList();
+                foreach (var entry in allEntries)
+                {
+                    using var entryStream = entry.Open();
+                    using var correctedEntryStream = await FixParsingOfNullableNumerics(entryStream);
+                    entry.Delete();
+                    var updatedEntry = archive.CreateEntry(entry.FullName);
+                    using var updatedEntrystream = updatedEntry.Open();
+                    await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                }
             }
             memStream.Position = 0;
             return memStream;
@@ -111,6 +122,32 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                 memStream.Position = 0;
                 return memStream;
             }
+        }
+
+        private async Task<Stream> FixParsingOfNullableNumerics(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var dartCode = await streamReader.ReadToEndAsync();
+
+                var nullableNumericTypes = Regex.Matches(dartCode, @"\s+num\? ([a-z][a-zA-Z0-9]+);");
+                if (nullableNumericTypes.Any())
+                {
+                    foreach (var nullableNumeric in nullableNumericTypes.OfType<System.Text.RegularExpressions.Match>())
+                    {
+                        dartCode = dartCode.Replace($"{nullableNumeric.Groups[1].Value}: num.parse(", $"{nullableNumeric.Groups[1].Value}: num.tryParse(");
+                    }
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(dartCode);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+
         }
     }
 }
