@@ -43,6 +43,7 @@ class Build : NukeBuild
     [GitRepository] readonly GitRepository GitRepository;
 
     [Parameter] readonly string NodePublishVersionOverride;
+    [Parameter] readonly string DartPublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
     [Parameter] readonly string PhpClientRepositoryTag;
 
