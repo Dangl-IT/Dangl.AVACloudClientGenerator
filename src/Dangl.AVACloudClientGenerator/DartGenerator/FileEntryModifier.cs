@@ -101,6 +101,17 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                     using var updatedEntrystream = updatedEntry.Open();
                     await correctedEntryStream.CopyToAsync(updatedEntrystream);
                 }
+
+                var apiEntries = archive.Entries.Where(e => e.FullName.EndsWith("_api.dart")).ToList();
+                foreach (var entry in apiEntries)
+                {
+                    using var entryStream = entry.Open();
+                    using var correctedEntryStream = await FixFileResponseAsync(entryStream);
+                    entry.Delete();
+                    var updatedEntry = archive.CreateEntry(entry.FullName);
+                    using var updatedEntrystream = updatedEntry.Open();
+                    await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                }
             }
             memStream.Position = 0;
             return memStream;
@@ -304,6 +315,39 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                 if (dartCode == updatedDartCode)
                 {
                     throw new InvalidOperationException("The code could not be updated");
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(updatedDartCode);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> FixFileResponseAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var dartCode = await streamReader.ReadToEndAsync();
+
+                var dartLines = Regex.Split(dartCode, @"\r\n?|\n");
+                var updatedDartCode = string.Empty;
+                var isInFileReturnMethod = false;
+                foreach (var line in dartLines)
+                {
+                    if (isInFileReturnMethod)
+                    {
+                        updatedDartCode += "      MultipartFile('file', ByteStream.fromBytes(response.bodyBytes), response.contentLength ?? 0, filename: response.headers['content-disposition']!.split('filename=')[1]);";
+                        isInFileReturnMethod = false;
+                    }
+                    else
+                    {
+                        updatedDartCode += line + Environment.NewLine;
+                        isInFileReturnMethod = line.Trim() == "if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {";
+                    }
                 }
 
                 var memStream = new MemoryStream();
