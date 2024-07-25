@@ -16,6 +16,9 @@
         "CustomSwaggerDefinitionUrl": {
           "type": "string"
         },
+        "DartPublishVersionOverride": {
+          "type": "string"
+        },
         "GitHubAuthenticationToken": {
           "type": "string"
         },
@@ -96,6 +99,7 @@
             "enum": [
               "Clean",
               "Compile",
+              "GenerateAndPublishDartClient",
               "GenerateAndPublishJavaScriptNpmClient",
               "GenerateAndPublishPhpClient",
               "GenerateAndPublishPythonClient",
@@ -116,6 +120,7 @@
             "enum": [
               "Clean",
               "Compile",
+              "GenerateAndPublishDartClient",
               "GenerateAndPublishJavaScriptNpmClient",
               "GenerateAndPublishPhpClient",
               "GenerateAndPublishPythonClient",
