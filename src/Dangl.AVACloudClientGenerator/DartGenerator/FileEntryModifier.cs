@@ -336,17 +336,30 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                 var dartLines = Regex.Split(dartCode, @"\r\n?|\n");
                 var updatedDartCode = string.Empty;
                 var isInFileReturnMethod = false;
+                var skipNextLine = false;
                 foreach (var line in dartLines)
                 {
+                    if (skipNextLine)
+                    {
+                        skipNextLine = false;
+                        continue;
+                    }
+
                     if (isInFileReturnMethod)
                     {
-                        updatedDartCode += "      MultipartFile('file', ByteStream.fromBytes(response.bodyBytes), response.contentLength ?? 0, filename: response.headers['content-disposition']!.split('filename=')[1]);";
-                        isInFileReturnMethod = false;
+                        var isResultMethod = line.Trim() == "if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {";
+                        updatedDartCode += line + Environment.NewLine;
+                        if (isResultMethod)
+                        {
+                            updatedDartCode += "      return MultipartFile('file', ByteStream.fromBytes(response.bodyBytes), response.contentLength ?? 0, filename: response.headers['content-disposition']!.split('filename=')[1]);";
+                            isInFileReturnMethod = false;
+                            skipNextLine = true;
+                        }
                     }
                     else
                     {
                         updatedDartCode += line + Environment.NewLine;
-                        isInFileReturnMethod = line.Trim() == "if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {";
+                        isInFileReturnMethod = line.Trim().StartsWith("Future<MultipartFile?>");
                     }
                 }
 
