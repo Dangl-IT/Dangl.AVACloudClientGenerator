@@ -112,7 +112,22 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                     using var updatedEntrystream = updatedEntry.Open();
                     await correctedEntryStream.CopyToAsync(updatedEntrystream);
                 }
+
+                var apiHelperEntry = archive.Entries.Single(e => e.FullName.EndsWith("api_helper.dart"));
+                using (var entryStream = apiHelperEntry.Open())
+                {
+                    using (var correctedEntryStream = await FixDoubleDeserializationAsync(entryStream))
+                    {
+                        apiHelperEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(apiHelperEntry.FullName);
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
             }
+
             memStream.Position = 0;
             return memStream;
         }
@@ -315,6 +330,39 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                 if (dartCode == updatedDartCode)
                 {
                     throw new InvalidOperationException("The code could not be updated");
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(updatedDartCode);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> FixDoubleDeserializationAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var dartCode = await streamReader.ReadToEndAsync();
+
+                var dartLines = Regex.Split(dartCode, @"\r\n?|\n");
+                var updatedDartCode = string.Empty;
+                var isInMapValueMethod = false;
+                foreach (var line in dartLines)
+                {
+                    updatedDartCode += line + Environment.NewLine;
+
+                    if (isInMapValueMethod)
+                    {
+                        updatedDartCode += @"  if (T == double && value is int) {
+    return value.toDouble() as T;
+  }" + Environment.NewLine;
+                    }
+
+                    isInMapValueMethod = line.Trim().StartsWith("T? mapValueOfType<T>(dynamic map, String key) {");
                 }
 
                 var memStream = new MemoryStream();
