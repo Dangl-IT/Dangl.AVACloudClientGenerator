@@ -246,7 +246,7 @@ namespace Dangl.AVACloudClientGenerator
             {
                 (clientRoot / "dart-client").Move(tempFolder);
 
-                StartProcess("dart", "pub publish", workingDirectory: tempFolder)
+                StartProcess("dart", "pub publish -f", workingDirectory: tempFolder)
                     .AssertZeroExitCode();
             }
             finally
