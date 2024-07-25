@@ -126,6 +126,20 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                         }
                     }
                 }
+
+                var pubspecEntry = archive.Entries.Single(e => e.FullName.EndsWith("pubspec.yaml"));
+                using (var entryStream = pubspecEntry.Open())
+                {
+                    using (var correctedEntryStream = await UpdatePubspecAsync(entryStream))
+                    {
+                        pubspecEntry.Delete();
+                        var updatedEntry = archive.CreateEntry(pubspecEntry.FullName);
+                        using (var updatedEntrystream = updatedEntry.Open())
+                        {
+                            await correctedEntryStream.CopyToAsync(updatedEntrystream);
+                        }
+                    }
+                }
             }
 
             memStream.Position = 0;
@@ -408,6 +422,44 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
                     {
                         updatedDartCode += line + Environment.NewLine;
                         isInFileReturnMethod = line.Trim().StartsWith("Future<MultipartFile?>");
+                    }
+                }
+
+                var memStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memStream, Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteAsync(updatedDartCode);
+                }
+                memStream.Position = 0;
+                return memStream;
+            }
+        }
+
+        private async Task<Stream> UpdatePubspecAsync(Stream fileStream)
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var dartCode = await streamReader.ReadToEndAsync();
+
+                var dartLines = Regex.Split(dartCode, @"\r\n?|\n");
+                var updatedDartCode = string.Empty;
+                foreach (var line in dartLines)
+                {
+                    if (line.Trim().StartsWith("description:"))
+                    {
+                        updatedDartCode += "description: 'AVACloud Client by Dangl IT GmbH'" + Environment.NewLine;
+                    }
+                    else if (line.Trim().StartsWith("homepage:"))
+                    {
+                        updatedDartCode += "homepage: 'https://www.dangl-it.com'" + Environment.NewLine;
+                    }
+                    else if (line.Trim().StartsWith("intl: any"))
+                    {
+                        updatedDartCode += "  intl: ^0.19.0" + Environment.NewLine;
+                    }
+                    else
+                    {
+                        updatedDartCode += line + Environment.NewLine;
                     }
                 }
 
