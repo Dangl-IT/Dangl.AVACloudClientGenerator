@@ -50,6 +50,10 @@ namespace Dangl.AVACloudClientGenerator
                     await GeneratePythonClient(swaggerDocumentUri);
                     break;
 
+                case ClientLanguage.Dart:
+                    await GenerateDartClient(swaggerDocumentUri);
+                    break;
+
                 default:
                     throw new NotImplementedException("The specified language is not supported");
             }
@@ -89,6 +93,13 @@ namespace Dangl.AVACloudClientGenerator
             var pythonOptionsGenerator = new PythonGenerator.OptionsGenerator(_avaCloudVersion);
             var pythonGenerator = new PythonGenerator.CodeGenerator(pythonOptionsGenerator, _avaCloudVersion);
             _zippedClientCodeStream = await pythonGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+        }
+
+        private async Task GenerateDartClient(string swaggerDocumentUri)
+        {
+            var dartOptionsGenerator = new DartGenerator.OptionsGenerator(_avaCloudVersion);
+            var dartGenerator = new DartGenerator.CodeGenerator(dartOptionsGenerator, _avaCloudVersion);
+            _zippedClientCodeStream = await dartGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
         }
 
         private async Task WriteClientCodeAsync(bool shouldAddReadme)

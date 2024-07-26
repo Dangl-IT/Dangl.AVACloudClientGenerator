@@ -66,5 +66,17 @@ namespace Dangl.AVACloudClientGenerator.Tests
                 Assert.True(zippedClientCodeStream.Length > 0);
             }
         }
+
+        [Fact]
+        public async Task CanGenerateDartClient()
+        {
+            var dartOptionsGenerator = new Dangl.AVACloudClientGenerator.DartGenerator.OptionsGenerator(_avaCloudVersion);
+            var dartGenerator = new Dangl.AVACloudClientGenerator.DartGenerator.CodeGenerator(dartOptionsGenerator, _avaCloudVersion);
+            using (var zippedClientCodeStream = await dartGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            {
+                Assert.NotNull(zippedClientCodeStream);
+                Assert.True(zippedClientCodeStream.Length > 0);
+            }
+        }
     }
 }

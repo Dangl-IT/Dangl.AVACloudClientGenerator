@@ -28,6 +28,7 @@ Currently, the converter supports the following values for the `language` argume
 | `JavaScript`    | Produces a JavaScript package to be used in browsers |
 | `Php`    | Produces a Php client |
 | `Python`    | Produces a Python client |
+| `Dart`    | Produces a Dart client |
 
 ## Build Target
 

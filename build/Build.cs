@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -42,6 +43,7 @@ class Build : NukeBuild
     [GitRepository] readonly GitRepository GitRepository;
 
     [Parameter] readonly string NodePublishVersionOverride;
+    [Parameter] readonly string DartPublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
     [Parameter] readonly string PhpClientRepositoryTag;
 
@@ -178,7 +180,8 @@ namespace Dangl.AVACloudClientGenerator
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
                 // "JavaScript",
                 "Php",
-                "Python"
+                "Python",
+                "Dart"
             };
 
             foreach (var language in languages)
@@ -211,6 +214,47 @@ namespace Dangl.AVACloudClientGenerator
 
         System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
     }
+
+    Target GenerateAndPublishDartClient => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            GenerateClient("Dart");
+
+            var clientRoot = OutputDirectory / "Dart";
+
+
+            if (!string.IsNullOrWhiteSpace(DartPublishVersionOverride))
+            {
+                var pubspecFile = clientRoot / "dart-client" / "pubspec.yaml";
+                var content = pubspecFile.ReadAllText();
+                var updatedContent = Regex.Split(content, @"\r\n?|\n")
+                    .Select(c => c.Trim().StartsWith("version:") ? $"version: {DartPublishVersionOverride}" : c)
+                    .Aggregate((c, n) => c + Environment.NewLine + n);
+                pubspecFile.WriteAllText(updatedContent);
+            }
+
+            (clientRoot / "dart-client" / "CHANGELOG.md").WriteAllText("# Dangl AVACloud Client"
+                + Environment.NewLine
+                + (DartPublishVersionOverride ?? GitVersion.NuGetVersion));
+            (clientRoot / "LICENSE.md").Move(clientRoot / "dart-client" / "LICENSE");
+
+            var tempFolder = RootDirectory / "temp-publish";
+            tempFolder.CreateOrCleanDirectory();
+            tempFolder.DeleteDirectory();
+            Task.Delay(100).Wait(); // There are sometimes timing issues with folder access
+            try
+            {
+                (clientRoot / "dart-client").Move(tempFolder);
+
+                StartProcess("dart", "pub publish -f", workingDirectory: tempFolder)
+                    .AssertZeroExitCode();
+            }
+            finally
+            {
+                tempFolder.DeleteDirectory();
+            }
+        });
 
     Target GenerateAndPublishTypeScriptNpmClient => _ => _
         .DependsOn(Compile)
