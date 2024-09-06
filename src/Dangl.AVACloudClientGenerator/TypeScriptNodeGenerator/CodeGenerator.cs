@@ -225,6 +225,32 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
 
             code = updatedCode;
 
+            // 6. Now we also want to update all the inner calls from `toJSON` to use the plain object
+            // in case the `toJSON` method isn't present, e.g. when working with plain objects
+            // instead of actual `Dto` instances
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            var toJsonPushRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\]\.push\(item\.toJSON\(\)\);");
+            foreach (var line in lines)
+            {
+                if (toJsonPushRegex.IsMatch(line))
+                {
+                    var indention = toJsonPushRegex.Match(line).Groups.Values.Skip(1).First();
+                    var propertyName = toJsonPushRegex.Match(line).Groups.Values.Last();
+
+                    updatedCode += indention + "if (typeof item.toJSON !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += "  " + line + Environment.NewLine;
+                    updatedCode += indention + "} else {" + Environment.NewLine;
+                    updatedCode += indention + " data[\"" + propertyName + "\"].push(item);" + Environment.NewLine;
+                    updatedCode += indention + "}" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
             return code;
         }
 
