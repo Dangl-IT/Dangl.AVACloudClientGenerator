@@ -251,6 +251,37 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             }
             code = updatedCode;
 
+            // 7. There are also other calls to `toJSON` that are not in array mapping methods
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            var toJsonRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\] = this\.([a-zA-Z0-9]+) \? this.([a-zA-Z0-9]+)\.toJSON\(\) : <any>undefined;");
+            foreach (var line in lines)
+            {
+                var match = toJsonRegex.Match(line);
+                if (match.Success && match.Groups.Count == 5
+                    && match.Groups[2].Value == match.Groups[3].Value
+                    && match.Groups[3].Value == match.Groups[4].Value)
+                {
+                    var indention = match.Groups[1].Value;
+                    var propertyName = match.Groups[2].Value;
+
+                    updatedCode += indention + $"if (this.{propertyName}) {{" + Environment.NewLine;
+                    updatedCode += indention + $"  if (typeof this.{propertyName}.toJSON !== \"undefined\") {{" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = this.{propertyName}.toJSON();" + Environment.NewLine;
+                    updatedCode += indention + "  } else {" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = this.{propertyName};" + Environment.NewLine;
+                    updatedCode += indention + "  }" + Environment.NewLine;
+                    updatedCode += indention + "} else {" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = <any>undefined;" + Environment.NewLine;
+                    updatedCode += indention + "}" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
             return code;
         }
 
