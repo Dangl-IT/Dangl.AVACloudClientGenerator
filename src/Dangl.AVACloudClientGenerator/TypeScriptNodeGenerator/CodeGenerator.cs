@@ -282,6 +282,43 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             }
             code = updatedCode;
 
+            // 8. For compatibility reasons between the itnerfaces and actual class implementations, we also
+            // want to `init` and `toJSON` properties to be optional
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            foreach (var line in lines)
+            {
+                if (line.Trim() == "toJSON(data?: any) {")
+                {
+                    updatedCode += line.Replace("toJSON(", "toJSON?(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "init(_data?: any) {")
+                {
+                    updatedCode += line.Replace("init(", "init?(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "result.init(data);")
+                {
+                    updatedCode += line.Replace("init(", "init!(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "super.init(_data);")
+                {
+                    updatedCode += "    if (typeof super.init !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += line + Environment.NewLine;
+                    updatedCode += "    }" + Environment.NewLine;
+                }
+                else if (line.Trim() == "super.toJSON(data);")
+                {
+                    updatedCode += "    if (typeof super.toJSON !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += line + Environment.NewLine;
+                    updatedCode += "    }" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
             return code;
         }
 
