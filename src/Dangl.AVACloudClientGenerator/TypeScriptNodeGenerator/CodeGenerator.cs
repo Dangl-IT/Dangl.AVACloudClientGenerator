@@ -225,6 +225,100 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
 
             code = updatedCode;
 
+            // 6. Now we also want to update all the inner calls from `toJSON` to use the plain object
+            // in case the `toJSON` method isn't present, e.g. when working with plain objects
+            // instead of actual `Dto` instances
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            var toJsonPushRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\]\.push\(item\.toJSON\(\)\);");
+            foreach (var line in lines)
+            {
+                if (toJsonPushRegex.IsMatch(line))
+                {
+                    var indention = toJsonPushRegex.Match(line).Groups.Values.Skip(1).First();
+                    var propertyName = toJsonPushRegex.Match(line).Groups.Values.Last();
+
+                    updatedCode += indention + "if (typeof item.toJSON !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += "  " + line + Environment.NewLine;
+                    updatedCode += indention + "} else {" + Environment.NewLine;
+                    updatedCode += indention + " data[\"" + propertyName + "\"].push(item);" + Environment.NewLine;
+                    updatedCode += indention + "}" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
+            // 7. There are also other calls to `toJSON` that are not in array mapping methods
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            var toJsonRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\] = this\.([a-zA-Z0-9]+) \? this.([a-zA-Z0-9]+)\.toJSON\(\) : <any>undefined;");
+            foreach (var line in lines)
+            {
+                var match = toJsonRegex.Match(line);
+                if (match.Success && match.Groups.Count == 5
+                    && match.Groups[2].Value == match.Groups[3].Value
+                    && match.Groups[3].Value == match.Groups[4].Value)
+                {
+                    var indention = match.Groups[1].Value;
+                    var propertyName = match.Groups[2].Value;
+
+                    updatedCode += indention + $"if (this.{propertyName}) {{" + Environment.NewLine;
+                    updatedCode += indention + $"  if (typeof this.{propertyName}.toJSON !== \"undefined\") {{" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = this.{propertyName}.toJSON();" + Environment.NewLine;
+                    updatedCode += indention + "  } else {" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = this.{propertyName};" + Environment.NewLine;
+                    updatedCode += indention + "  }" + Environment.NewLine;
+                    updatedCode += indention + "} else {" + Environment.NewLine;
+                    updatedCode += indention + $"  data[\"{propertyName}\"] = <any>undefined;" + Environment.NewLine;
+                    updatedCode += indention + "}" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
+            // 8. For compatibility reasons between the itnerfaces and actual class implementations, we also
+            // want to `init` and `toJSON` properties to be optional
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            foreach (var line in lines)
+            {
+                if (line.Trim() == "toJSON(data?: any) {")
+                {
+                    updatedCode += line.Replace("toJSON(", "toJSON?(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "init(_data?: any) {")
+                {
+                    updatedCode += line.Replace("init(", "init?(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "result.init(data);")
+                {
+                    updatedCode += line.Replace("init(", "init!(") + Environment.NewLine;
+                }
+                else if (line.Trim() == "super.init(_data);")
+                {
+                    updatedCode += "    if (typeof super.init !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += line + Environment.NewLine;
+                    updatedCode += "    }" + Environment.NewLine;
+                }
+                else if (line.Trim() == "super.toJSON(data);")
+                {
+                    updatedCode += "    if (typeof super.toJSON !== \"undefined\") {" + Environment.NewLine;
+                    updatedCode += line + Environment.NewLine;
+                    updatedCode += "    }" + Environment.NewLine;
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+            code = updatedCode;
+
             return code;
         }
 
