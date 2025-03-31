@@ -193,7 +193,7 @@ namespace Dangl.AVACloudClientGenerator
 
     private void GenerateClient(string language)
     {
-        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net8.0" / "Dangl.AVACloudClientGenerator.dll";
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory / language;
 
 
