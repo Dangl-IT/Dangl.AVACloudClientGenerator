@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -30,6 +31,11 @@ namespace Dangl.AVACloudClientGenerator.JavaScriptGenerator
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
+            if (!generatedClientResponse.IsSuccessStatusCode)
+            {
+                var errorMessage = await generatedClientResponse.Content.ReadAsStringAsync();
+                throw new Exception("Error during download of generated client from Swagger, status code: " + generatedClientResponse.StatusCode + Environment.NewLine + errorMessage);
+            }
             using (var generatedClientStream = await generatedClientResponse.Content.ReadAsStreamAsync())
             {
                 var fileEntryModifier = new FileEntryModifier(generatedClientStream);
