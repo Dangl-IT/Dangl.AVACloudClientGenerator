@@ -141,6 +141,9 @@
         },
         "PythonClientRepositoryTag": {
           "type": "string"
+        },
+        "SwaggerGeneratorContainerName": {
+          "type": "string"
         }
       }
     },

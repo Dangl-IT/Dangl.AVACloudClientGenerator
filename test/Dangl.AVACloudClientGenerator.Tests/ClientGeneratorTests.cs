@@ -13,7 +13,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var javaOptionsGenerator = new JavaGenerator.OptionsGenerator(_avaCloudVersion);
             var javaGenerator = new JavaGenerator.CodeGenerator(javaOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            using (var zippedClientCodeStream = await javaGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder"))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);
@@ -36,7 +36,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var javaScriptOptionsGenerator = new Dangl.AVACloudClientGenerator.JavaScriptGenerator.OptionsGenerator(_avaCloudVersion);
             var javaScriptGenerator = new Dangl.AVACloudClientGenerator.JavaScriptGenerator.CodeGenerator(javaScriptOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await javaScriptGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            using (var zippedClientCodeStream = await javaScriptGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder"))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);
@@ -48,7 +48,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var phpOptionsGenerator = new Dangl.AVACloudClientGenerator.PhpGenerator.OptionsGenerator(_avaCloudVersion);
             var phpGenerator = new Dangl.AVACloudClientGenerator.PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            using (var zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder"))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);
@@ -60,7 +60,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
         {
             var pythonOptionsGenerator = new Dangl.AVACloudClientGenerator.PythonGenerator.OptionsGenerator(_avaCloudVersion);
             var pythonGenerator = new Dangl.AVACloudClientGenerator.PythonGenerator.CodeGenerator(pythonOptionsGenerator, _avaCloudVersion);
-            using (var zippedClientCodeStream = await pythonGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT))
+            using (var zippedClientCodeStream = await pythonGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder"))
             {
                 Assert.NotNull(zippedClientCodeStream);
                 Assert.True(zippedClientCodeStream.Length > 0);

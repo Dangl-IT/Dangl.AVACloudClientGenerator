@@ -23,13 +23,19 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Stream> GetGeneratedCodeZipPackageAsync(string swaggerDocumentUri)
+        public async Task<Stream> GetGeneratedCodeZipPackageAsync(string swaggerDocumentUri, string swaggerGeneratorClientGenEndpoint)
         {
+            if (string.IsNullOrWhiteSpace(swaggerGeneratorClientGenEndpoint))
+            {
+                throw new Exception($"The {SWAGGER_GENERATOR_LANGUAGE_PARAM} client generator requires a Swagger generator client gen endpoint.");
+            }
+
             var httpClient = new HttpClient();
-            var postRequestMessage = await GetPostRequestMessageAsync(swaggerDocumentUri);
+            var postRequestMessage = await GetPostRequestMessageAsync(swaggerDocumentUri, swaggerGeneratorClientGenEndpoint);
             var generatorResponse = await httpClient.SendAsync(postRequestMessage);
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
-            var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
+            var uri = new Uri(swaggerGeneratorClientGenEndpoint);
+            var downloadLink = ((string)JObject.Parse(jsonResponse)["link"]).Replace("https://generator.swaggerhub.com/api/swagger.json", $"{uri.Scheme}://{uri.Host}:{uri.Port}");
             var generatedClientResponse = await httpClient.GetAsync(downloadLink);
             if (!generatedClientResponse.IsSuccessStatusCode)
             {
@@ -40,7 +46,7 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
             return generatedClientStream;
         }
 
-        private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
+        private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri, string swaggerGeneratorClientGenEndpoint)
         {
             var javaClientOptions = await _optionsGenerator.GetJavaClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
@@ -55,7 +61,7 @@ namespace Dangl.AVACloudClientGenerator.JavaGenerator
             };
             var generatorOptionsJson = JsonConvert.SerializeObject(generatorOptions, camelCaseSerializerSettings);
 
-            var url = Constants.SWAGGER_GENERATOR_CLIENT_GEN_ENDPOINT + SWAGGER_GENERATOR_LANGUAGE_PARAM;
+            var url = swaggerGeneratorClientGenEndpoint + SWAGGER_GENERATOR_LANGUAGE_PARAM;
 
             return new HttpRequestMessage(HttpMethod.Post, url)
             {

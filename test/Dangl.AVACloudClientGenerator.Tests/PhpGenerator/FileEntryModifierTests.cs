@@ -35,7 +35,7 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
         {
             var phpOptionsGenerator = new OptionsGenerator(_avaCloudVersion);
             var phpGenerator = new CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT);
+            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder");
         }
 
         private string GetFileContentForArchive(Stream archiveStream, string entryName)
