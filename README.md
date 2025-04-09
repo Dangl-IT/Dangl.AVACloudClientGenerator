@@ -15,6 +15,9 @@ Example:
 | -o        | Path where to save the generated client to |
 | -l        | Language of the client. See below for available options |
 | -u        | Optional. Url of the Swagger definitions document. Defaults to 'https://avacloud-api.dangl-it.com/swagger/swagger.json' |
+| -d        | Optional. Use local Docker containers for the generation. This is required for some languages |
+| -a        | Optional url to the OpenAPI generator client gen endpoint. Will be ignored if using a local Docker generator |
+| -s        | Optional url to the swagger generator client gen endpoint. Will be ignored if using a local Docker generator |
 | --help    | Display options |
 
 ### Supported Languages
