@@ -13,7 +13,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -188,48 +190,62 @@ namespace Dangl.AVACloudClientGenerator
                 "Dart"
             };
 
-            var port = "8080"; // TODO: this is hardcoded, since seems like Docker container doesn't work with dynamic ports.
+            var port = GetFreePort();
             DockerPull(c => c.SetName("swaggerapi/swagger-generator"));
             DockerRun(settings => settings
                 .SetImage("swaggerapi/swagger-generator")
                 .SetName(SwaggerGeneratorContainerName)
-                .SetPublish($"{port}:{port}")
+                .SetPublish($"{port}:8080")
                 .SetDetach(true)
                 .SetRm(true));
 
-            var containerInfo = DockerInspect(settings => settings
-                .SetNames(SwaggerGeneratorContainerName)
-                .SetFormat("{{json .}}"))
-                .FirstOrDefault();
-
-            string swaggerGeneratorClientGenEndpoint = null;
-            if (containerInfo.Type == OutputType.Std && !string.IsNullOrWhiteSpace(containerInfo.Text))
+            try
             {
-                var containerJson = JObject.Parse(containerInfo.Text);
-                var ipAddress = containerJson?["NetworkSettings"]?["IPAddress"]?.ToString();
-                if (!string.IsNullOrWhiteSpace(ipAddress))
+                var containerInfo = DockerInspect(settings => settings
+                    .SetNames(SwaggerGeneratorContainerName)
+                    .SetFormat("{{json .}}"))
+                    .FirstOrDefault();
+
+                string swaggerGeneratorClientGenEndpoint = null;
+                if (containerInfo.Type == OutputType.Std && !string.IsNullOrWhiteSpace(containerInfo.Text))
                 {
-                    ipAddress = "localhost"; // TODO: should we update this?
-                    swaggerGeneratorClientGenEndpoint = $"http://{ipAddress}:{port}/api/gen/clients/";
+                    var containerJson = JObject.Parse(containerInfo.Text);
+                    var ipAddress = containerJson?["NetworkSettings"]?["IPAddress"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(ipAddress))
+                    {
+                        ipAddress = "localhost"; // TODO: should we update this?
+                        swaggerGeneratorClientGenEndpoint = $"http://{ipAddress}:{port}/api/gen/clients/";
+                    }
+                    else
+                    {
+                        Serilog.Log.Error($"Failed to get IP address for {SwaggerGeneratorContainerName} container");
+                    }
                 }
                 else
                 {
-                    Serilog.Log.Error($"Failed to get IP address for {SwaggerGeneratorContainerName} container");
+                    Serilog.Log.Error($"Failed to get {SwaggerGeneratorContainerName} container info");
+                }
+
+                foreach (var language in languages)
+                {
+                    GenerateClient(language, swaggerGeneratorClientGenEndpoint);
                 }
             }
-            else
+            finally
             {
-                Serilog.Log.Error($"Failed to get {SwaggerGeneratorContainerName} container info");
+                DockerStop(settings => settings
+                    .SetContainers(SwaggerGeneratorContainerName));
             }
-
-            foreach (var language in languages)
-            {
-                GenerateClient(language, swaggerGeneratorClientGenEndpoint);
-            }
-
-            DockerStop(settings => settings
-                .SetContainers(SwaggerGeneratorContainerName));
         });
+
+    private int GetFreePort()
+    {
+        var tcpListener = new TcpListener(IPAddress.Loopback, 0);
+        tcpListener.Start();
+        int port = ((IPEndPoint)tcpListener.LocalEndpoint).Port;
+        tcpListener.Stop();
+        return port;
+    }
 
     private void GenerateClient(string language, string outerSwaggerGeneratorClientGenEndpoint = null)
     {
