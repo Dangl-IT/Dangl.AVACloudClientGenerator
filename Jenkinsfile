@@ -4,7 +4,7 @@ pipeline {
     }
     agent {
         node {
-            label 'master'
+            label 'linux'
             customWorkspace 'workspace/Dangl.AVACloudClientGenerator'
         }
     }
@@ -17,9 +17,9 @@ pipeline {
     stages {
         stage ('Test') {
             steps {
-                powershell 'docker pull swaggerapi/swagger-generator:latest'
-                powershell 'docker pull openapitools/openapi-generator-online:latest'
-                powershell './build.ps1 Test -Configuration Debug'
+                sh 'docker pull swaggerapi/swagger-generator:latest'
+                sh 'docker pull openapitools/openapi-generator-online:latest'
+                sh 'bash build.sh Test -Configuration Debug'
             }
             post {
                 always {
@@ -48,7 +48,7 @@ pipeline {
         }
         stage ('Publish GitHub Release') {
             steps {
-                powershell './build.ps1 Publish'
+                sh 'bash build.sh Publish'
             }
         }
     }
