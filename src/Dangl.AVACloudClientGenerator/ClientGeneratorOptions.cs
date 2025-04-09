@@ -15,5 +15,8 @@ namespace Dangl.AVACloudClientGenerator
 
         [Option('s', "swaggergenendpoint", Required = false, HelpText = "Optional url to the swagger generator client gen endpoint. It's required for several languages.")]
         public string SwaggerGeneratorClientGenEndpoint { get; set; }
+
+        [Option('d', "docker", Required = false, Default = false, HelpText = "Use local Docker containers for the generation. This is required for some languages.")]
+        public bool UseLocalDockerContainers { get; set; }
     }
 }

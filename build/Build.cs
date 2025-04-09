@@ -180,7 +180,7 @@ namespace Dangl.AVACloudClientGenerator
         .Executes(() =>
         {
             var languages = new[]
-            { 
+            {
                 "Java",
                 "TypeScriptNode",
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
@@ -190,112 +190,14 @@ namespace Dangl.AVACloudClientGenerator
                 "Dart"
             };
 
-            var port = GetFreePort();
-            DockerPull(c => c.SetName("swaggerapi/swagger-generator"));
-            DockerRun(settings => settings
-                .SetImage("swaggerapi/swagger-generator")
-                .SetName(SwaggerGeneratorContainerName)
-                .SetPublish($"{port}:8080")
-                .SetDetach(true)
-                .SetRm(true));
-
-            try
+            foreach (var language in languages)
             {
-                var containerInfo = DockerInspect(settings => settings
-                    .SetNames(SwaggerGeneratorContainerName)
-                    .SetFormat("{{json .}}"))
-                    .FirstOrDefault();
-
-                string swaggerGeneratorClientGenEndpoint = null;
-                if (containerInfo.Type == OutputType.Std && !string.IsNullOrWhiteSpace(containerInfo.Text))
-                {
-                    var containerJson = JObject.Parse(containerInfo.Text);
-                    var ipAddress = containerJson?["NetworkSettings"]?["IPAddress"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(ipAddress))
-                    {
-                        ipAddress = "localhost"; // TODO: should we update this?
-                        swaggerGeneratorClientGenEndpoint = $"http://{ipAddress}:{port}/api/gen/clients/";
-                    }
-                    else
-                    {
-                        Serilog.Log.Error($"Failed to get IP address for {SwaggerGeneratorContainerName} container");
-                    }
-                }
-                else
-                {
-                    Serilog.Log.Error($"Failed to get {SwaggerGeneratorContainerName} container info");
-                }
-
-                foreach (var language in languages)
-                {
-                    GenerateClient(language, swaggerGeneratorClientGenEndpoint);
-                }
-            }
-            finally
-            {
-                DockerStop(settings => settings
-                    .SetContainers(SwaggerGeneratorContainerName));
+                GenerateClient(language);
             }
         });
 
-    private int GetFreePort()
+    private void GenerateClient(string language)
     {
-        var tcpListener = new TcpListener(IPAddress.Loopback, 0);
-        tcpListener.Start();
-        int port = ((IPEndPoint)tcpListener.LocalEndpoint).Port;
-        tcpListener.Stop();
-        return port;
-    }
-
-    private void GenerateClient(string language, string outerSwaggerGeneratorClientGenEndpoint = null)
-    {
-        string swaggerGeneratorClientGenEndpoint = null;
-        if (language == "Java" ||
-            language == "JavaScript" ||
-            language == "Php" ||
-            language == "Python")
-        {
-            if (string.IsNullOrWhiteSpace(outerSwaggerGeneratorClientGenEndpoint))
-            {
-                var port = "8080"; // TODO: this is hardcoded, since seems like Docker container doesn't work with dynamic ports.
-                DockerPull(c => c.SetName("swaggerapi/swagger-generator"));
-                DockerRun(settings => settings
-                    .SetImage("swaggerapi/swagger-generator")
-                    .SetName(SwaggerGeneratorContainerName)
-                    .SetPublish($"{port}:{port}")
-                    .SetDetach(true)
-                    .SetRm(true));
-
-                var containerInfo = DockerInspect(settings => settings
-                    .SetNames(SwaggerGeneratorContainerName)
-                    .SetFormat("{{json .}}"))
-                    .FirstOrDefault();
-
-                if (containerInfo.Type == OutputType.Std && !string.IsNullOrWhiteSpace(containerInfo.Text))
-                {
-                    var containerJson = JObject.Parse(containerInfo.Text);
-                    var ipAddress = containerJson?["NetworkSettings"]?["IPAddress"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(ipAddress))
-                    {
-                        ipAddress = "localhost"; // TODO: should we update this?
-                        swaggerGeneratorClientGenEndpoint = $"http://{ipAddress}:{port}/api/gen/clients/";
-                    }
-                    else
-                    {
-                        Serilog.Log.Error($"Failed to get IP address for {SwaggerGeneratorContainerName} container");
-                    }
-                }
-                else
-                {
-                    Serilog.Log.Error($"Failed to get {SwaggerGeneratorContainerName} container info");
-                }
-            }
-            else
-            {
-                swaggerGeneratorClientGenEndpoint = outerSwaggerGeneratorClientGenEndpoint;
-            }
-        }
-
         var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory / language;
         var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
@@ -305,20 +207,10 @@ namespace Dangl.AVACloudClientGenerator
             Serilog.Log.Information("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
             arguments += $" -u {CustomSwaggerDefinitionUrl}";
         }
-
-        if (!string.IsNullOrWhiteSpace(swaggerGeneratorClientGenEndpoint))
-        {
-            arguments += $" -s {swaggerGeneratorClientGenEndpoint}";
-        }
         else
         {
-            if (language == "Java" ||
-                language == "JavaScript" ||
-                language == "Php" ||
-                language == "Python")
-            {
-                throw new Exception($"The {language} client generator requires a Swagger generator client gen endpoint.");
-            }
+            Serilog.Log.Information("Using local Docker for client generation");
+            arguments += " -d";
         }
 
         StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
@@ -332,17 +224,7 @@ namespace Dangl.AVACloudClientGenerator
 
         System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
 
-        if (language == "Java" ||
-            language == "JavaScript" ||
-            language == "Php" ||
-            language == "Python")
-        {
-            if (string.IsNullOrWhiteSpace(outerSwaggerGeneratorClientGenEndpoint))
-            {
-                DockerStop(settings => settings
-                    .SetContainers(SwaggerGeneratorContainerName));
-            }
-        }
+        Serilog.Log.Information("Client generation finished: " + language);
     }
 
     Target GenerateAndPublishDartClient => _ => _
