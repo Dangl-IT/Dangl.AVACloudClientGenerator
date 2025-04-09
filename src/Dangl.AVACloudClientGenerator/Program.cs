@@ -21,7 +21,7 @@ namespace Dangl.AVACloudClientGenerator
                 var hasStartedDocker = false;
                 try
                 {
-                    if (clientGeneratorOptions.Value.UseLocalDockerContainers || true)
+                    if (clientGeneratorOptions.Value.UseLocalDockerContainers)
                     {
                         Console.WriteLine("Starting Docker containers...");
                         var containerPorts = await dockerContainerManager.StartDockerContainersAsync();
