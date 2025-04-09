@@ -17,6 +17,8 @@ pipeline {
     stages {
         stage ('Test') {
             steps {
+                powershell 'docker pull swaggerapi/swagger-generator:latest'
+                powershell 'docker pull openapitools/openapi-generator-online:latest'
                 powershell './build.ps1 Test -Configuration Debug'
             }
             post {
