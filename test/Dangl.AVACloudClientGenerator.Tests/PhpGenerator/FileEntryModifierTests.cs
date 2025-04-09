@@ -10,32 +10,46 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
     public class FileEntryModifierTests
     {
         private readonly AVACloudVersion _avaCloudVersion = new AVACloudVersion();
-        
+
         [Fact]
         public async Task SetsGuzzleToV744()
         {
-            using var sourceStream = await GetSourceZipArchiveStreamAsync();
-            var composerJsonContent = GetFileContentForArchive(sourceStream, "composer.json");
+            try
+            {
+                using var sourceStream = await GetSourceZipArchiveStreamAsync();
+                var composerJsonContent = GetFileContentForArchive(sourceStream, "composer.json");
 
-            Assert.Contains("\"guzzlehttp/guzzle\": \"^7.4.4\"", composerJsonContent);
-            Assert.DoesNotContain("\"guzzlehttp/guzzle\": \"^6.2\"", composerJsonContent);
+                Assert.Contains("\"guzzlehttp/guzzle\": \"^7.4.4\"", composerJsonContent);
+                Assert.DoesNotContain("\"guzzlehttp/guzzle\": \"^6.2\"", composerJsonContent);
+            }
+            finally
+            {
+                DockerTestHelper.DecrementReaderCount();
+            }
         }
-        
+
         [Fact]
         public async Task UsesNewUtilityMethodsForFileLoading()
         {
-            using var sourceStream = await GetSourceZipArchiveStreamAsync();
-            var gaebConversionApiCode = GetFileContentForArchive(sourceStream, "GaebConversionApi.php");
+            try
+            {
+                using var sourceStream = await GetSourceZipArchiveStreamAsync();
+                var gaebConversionApiCode = GetFileContentForArchive(sourceStream, "GaebConversionApi.php");
 
-            Assert.Contains("Utils::tryFopen", gaebConversionApiCode);
-            Assert.DoesNotContain("try_fopen", gaebConversionApiCode);
+                Assert.Contains("Utils::tryFopen", gaebConversionApiCode);
+                Assert.DoesNotContain("try_fopen", gaebConversionApiCode);
+            }
+            finally
+            {
+                DockerTestHelper.DecrementReaderCount();
+            }
         }
 
         private async Task<Stream> GetSourceZipArchiveStreamAsync()
         {
             var phpOptionsGenerator = new OptionsGenerator(_avaCloudVersion);
             var phpGenerator = new CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, "placeholder");
+            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, DockerTestHelper.GetSwaggerDockerUrl());
         }
 
         private string GetFileContentForArchive(Stream archiveStream, string entryName)
