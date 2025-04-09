@@ -9,6 +9,7 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -184,23 +185,22 @@ namespace Dangl.AVACloudClientGenerator
                 "Java",
                 "TypeScriptNode",
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
+                // I've notived that when using the local Docker container, CPU usage for the container goes to 100% and
+                // just stays there
                 // "JavaScript",
                 "Php",
                 "Python",
                 "Dart"
             };
 
-            foreach (var language in languages)
-            {
-                GenerateClient(language);
-            }
+            GenerateClientsInternal(languages);
         });
 
-    private void GenerateClient(string language)
+    private void GenerateClientsInternal(string[] languages)
     {
         var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
-        var outputPath = OutputDirectory / language;
-        var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
+        var outputPath = OutputDirectory;
+        var arguments = $"\"{generatorPath}\" -l {languages.Aggregate((c, n) => c + " " + n)} -o \"{outputPath}\"";
 
         if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
         {
@@ -216,22 +216,23 @@ namespace Dangl.AVACloudClientGenerator
         StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
             .AssertZeroExitCode();
 
-        var zipOutputPath = outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
-        if (File.Exists(zipOutputPath))
+        foreach (var language in languages)
         {
-            ((AbsolutePath)zipOutputPath).DeleteFile();
+            var zipOutputPath = (outputPath / language).ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
+            if (File.Exists(zipOutputPath))
+            {
+                ((AbsolutePath)zipOutputPath).DeleteFile();
+            }
+
+            System.IO.Compression.ZipFile.CreateFromDirectory(outputPath / language, zipOutputPath);
         }
-
-        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
-
-        Serilog.Log.Information("Client generation finished: " + language);
     }
 
     Target GenerateAndPublishDartClient => _ => _
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Dart");
+            GenerateClientsInternal(new[] { "Dart" });
 
             var clientRoot = OutputDirectory / "Dart";
 
@@ -272,7 +273,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("TypeScriptNode");
+            GenerateClientsInternal(new[] { "TypeScriptNode" });
 
             var clientRoot = OutputDirectory / "TypeScriptNode";
 
@@ -300,7 +301,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("JavaScript");
+            GenerateClientsInternal(new[] { "JavaScript" });
 
             var clientRoot = OutputDirectory / "JavaScript";
             var clientDir = clientRoot / "javascript-client";
@@ -349,7 +350,7 @@ namespace Dangl.AVACloudClientGenerator
         clientRoot.CreateOrCleanDirectory();
         clientDir.CreateOrCleanDirectory();
 
-        GenerateClient("Python");
+        GenerateClientsInternal(new[] { "Python" });
 
         (clientDir / "README.md").Move(clientDir / "API_README.md");
         (clientRoot / "README.md").Copy(clientDir / "README.md");
@@ -445,7 +446,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Php");
+            GenerateClientsInternal(new[] { "Php" });
 
             var composerJsonFile = OutputDirectory.GlobFiles("**/*composer.json").Single();
             var composerJson = composerJsonFile.ReadAllText();

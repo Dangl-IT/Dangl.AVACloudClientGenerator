@@ -30,10 +30,8 @@ namespace Dangl.AVACloudClientGenerator
                         hasStartedDocker = true;
                     }
 
-                    using (var generator = new ClientGenerator(clientGeneratorOptions.Value))
-                    {
-                        await generator.GenerateClientCodeAsync();
-                    }
+                    var generator = new ClientGenerator(clientGeneratorOptions.Value);
+                    await generator.GenerateClientCodeAsync();
                     Console.WriteLine("Client Generated");
                 }
                 catch (Exception e)

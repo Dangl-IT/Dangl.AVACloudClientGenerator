@@ -131,7 +131,7 @@ namespace Dangl.AVACloudClientGenerator
                 .StartContainerAsync(swaggerClientGeneratorDockerContainer.ID, new ContainerStartParameters());
 
             await WaitUntilWebserviceIsAvailableAsync(freePort);
-            _swaggerGenDockerContainerId = swaggerClientGeneratorDockerContainer.ID;
+            _openApiGenDockerContainerId = swaggerClientGeneratorDockerContainer.ID;
             return freePort;
         }
 

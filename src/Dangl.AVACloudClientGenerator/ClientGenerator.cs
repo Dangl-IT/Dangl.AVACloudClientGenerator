@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dangl.AVACloudClientGenerator
 {
-    public sealed class ClientGenerator : IDisposable
+    public sealed class ClientGenerator
     {
         private readonly ClientGeneratorOptions _clientGeneratorOptions;
         private readonly AVACloudVersion _avaCloudVersion = new AVACloudVersion();
@@ -17,49 +17,50 @@ namespace Dangl.AVACloudClientGenerator
             _clientGeneratorOptions = clientGeneratorOptions;
         }
 
-        public void Dispose()
-        {
-            _zippedClientCodeStream?.Dispose();
-        }
-
         public async Task GenerateClientCodeAsync()
         {
             var swaggerDocumentUri = string.IsNullOrWhiteSpace(_clientGeneratorOptions.SwaggerDocUri)
                 ? Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT
                 : _clientGeneratorOptions.SwaggerDocUri;
             var shouldAddReadme = true;
-            switch (_clientGeneratorOptions.ClientLanguage)
+            foreach (var language in _clientGeneratorOptions.ClientLanguage)
             {
-                case ClientLanguage.Java:
-                    await GenerateJavaClient(swaggerDocumentUri);
-                    break;
+                Console.WriteLine("Generating client for " + language.ToString() + "...");
 
-                case ClientLanguage.TypeScriptNode:
-                    await GenerateTypeScriptNodeClient(swaggerDocumentUri);
-                    shouldAddReadme = false;
-                    break;
+                switch (language)
+                {
+                    case ClientLanguage.Java:
+                        await GenerateJavaClient(swaggerDocumentUri);
+                        break;
 
-                case ClientLanguage.JavaScript:
-                    await GenerateJavaScriptClient(swaggerDocumentUri);
-                    break;
+                    case ClientLanguage.TypeScriptNode:
+                        await GenerateTypeScriptNodeClient(swaggerDocumentUri);
+                        shouldAddReadme = false;
+                        break;
 
-                case ClientLanguage.Php:
-                    await GeneratePhpClient(swaggerDocumentUri);
-                    break;
+                    case ClientLanguage.JavaScript:
+                        await GenerateJavaScriptClient(swaggerDocumentUri);
+                        break;
 
-                case ClientLanguage.Python:
-                    await GeneratePythonClient(swaggerDocumentUri);
-                    break;
+                    case ClientLanguage.Php:
+                        await GeneratePhpClient(swaggerDocumentUri);
+                        break;
 
-                case ClientLanguage.Dart:
-                    await GenerateDartClient(swaggerDocumentUri);
-                    break;
+                    case ClientLanguage.Python:
+                        await GeneratePythonClient(swaggerDocumentUri);
+                        break;
 
-                default:
-                    throw new NotImplementedException("The specified language is not supported");
+                    case ClientLanguage.Dart:
+                        await GenerateDartClient(swaggerDocumentUri);
+                        break;
+
+                    default:
+                        throw new NotImplementedException("The specified language is not supported");
+                }
+
+                await WriteClientCodeAsync(shouldAddReadme, language);
+                _zippedClientCodeStream?.Dispose();
             }
-
-            await WriteClientCodeAsync(shouldAddReadme);
         }
 
         private async Task GenerateJavaClient(string swaggerDocumentUri)
@@ -103,9 +104,9 @@ namespace Dangl.AVACloudClientGenerator
             _zippedClientCodeStream = await dartGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri, _clientGeneratorOptions.OpenApiGeneratorClientGenEndpoint);
         }
 
-        private async Task WriteClientCodeAsync(bool shouldAddReadme)
+        private async Task WriteClientCodeAsync(bool shouldAddReadme, ClientLanguage language)
         {
-            await new OutputWriter(_zippedClientCodeStream, _clientGeneratorOptions.OutputPathFolder)
+            await new OutputWriter(_zippedClientCodeStream, Path.Combine(_clientGeneratorOptions.OutputPathFolder, language.ToString()))
                 .WriteCodeToDirectoryAndAddReadmeAndLicense(shouldAddReadme);
         }
     }
