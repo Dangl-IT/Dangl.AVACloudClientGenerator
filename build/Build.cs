@@ -4,21 +4,24 @@ using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureKeyVault;
+using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.TextTasks;
 using static Nuke.Common.Tooling.ProcessTasks;
+using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
@@ -48,6 +51,7 @@ class Build : NukeBuild
     [Parameter] readonly string PhpClientRepositoryTag;
 
     [Parameter] readonly string CustomSwaggerDefinitionUrl;
+    [Parameter] readonly string SwaggerGeneratorContainerName = "AVACloudClientGenerator_SwaggerGenerator";
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
@@ -137,7 +141,7 @@ namespace Dangl.AVACloudClientGenerator
 
     Target Publish => _ => _
         .DependsOn(GenerateClients)
-        .Executes(async () =>
+        .Executes(() =>
         {
             var publishDir = OutputDirectory / "publish";
             var zipPath = OutputDirectory / "AVACloud.Client.Generator.zip";
@@ -159,14 +163,17 @@ namespace Dangl.AVACloudClientGenerator
 
             var artifactPaths = new string[] { zipPath }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
 
-            await PublishRelease(x => x
+            PublishRelease(x => x
                 .SetArtifactPaths(artifactPaths)
                 .SetCommitSha(GitVersion.Sha)
                 .SetRepositoryName(repositoryInfo.repositoryName)
                 .SetRepositoryOwner(repositoryInfo.gitHubOwner)
                 .SetTag(GitVersion.NuGetVersion)
                 .SetPrerelease(isPrerelease)
-                .SetToken(GitHubAuthenticationToken));
+                .SetToken(GitHubAuthenticationToken))
+            .ConfigureAwait(false)
+            .GetAwaiter()
+            .GetResult();
         });
 
     Target GenerateClients => _ => _
@@ -174,52 +181,58 @@ namespace Dangl.AVACloudClientGenerator
         .Executes(() =>
         {
             var languages = new[]
-            { 
+            {
                 "Java",
                 "TypeScriptNode",
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
+                // I've notived that when using the local Docker container, CPU usage for the container goes to 100% and
+                // just stays there
                 // "JavaScript",
                 "Php",
                 "Python",
                 "Dart"
             };
 
-            foreach (var language in languages)
-            {
-                GenerateClient(language);
-            }
+            GenerateClientsInternal(languages);
         });
 
-    private void GenerateClient(string language)
+    private void GenerateClientsInternal(string[] languages)
     {
-        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net8.0" / "Dangl.AVACloudClientGenerator.dll";
-        var outputPath = OutputDirectory / language;
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
+        var outputPath = OutputDirectory;
+        var arguments = $"\"{generatorPath}\" -l {languages.Aggregate((c, n) => c + " " + n)} -o \"{outputPath}\"";
 
-
-        var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
         if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
         {
             Serilog.Log.Information("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
             arguments += $" -u {CustomSwaggerDefinitionUrl}";
         }
+        else
+        {
+            Serilog.Log.Information("Using local Docker for client generation");
+            arguments += " -d";
+        }
 
         StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
             .AssertZeroExitCode();
 
-        var zipOutputPath = outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
-        if (File.Exists(zipOutputPath))
+        foreach (var language in languages)
         {
-            ((AbsolutePath)zipOutputPath).DeleteFile();
-        }
+            var zipOutputPath = (outputPath / language).ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
+            if (File.Exists(zipOutputPath))
+            {
+                ((AbsolutePath)zipOutputPath).DeleteFile();
+            }
 
-        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
+            System.IO.Compression.ZipFile.CreateFromDirectory(outputPath / language, zipOutputPath);
+        }
     }
 
     Target GenerateAndPublishDartClient => _ => _
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Dart");
+            GenerateClientsInternal(new[] { "Dart" });
 
             var clientRoot = OutputDirectory / "Dart";
 
@@ -260,7 +273,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("TypeScriptNode");
+            GenerateClientsInternal(new[] { "TypeScriptNode" });
 
             var clientRoot = OutputDirectory / "TypeScriptNode";
 
@@ -279,7 +292,7 @@ namespace Dangl.AVACloudClientGenerator
             }
 
             NpmInstall(x => x.SetProcessWorkingDirectory(clientRoot));
-            NpmRun(x => x.SetProcessWorkingDirectory(clientRoot).SetProcessArgumentConfigurator(a => a.Add("build")));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientRoot).AddProcessAdditionalArguments("build"));
 
             Npm("publish --access=public", clientRoot);
         });
@@ -288,14 +301,14 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("JavaScript");
+            GenerateClientsInternal(new[] { "JavaScript" });
 
             var clientRoot = OutputDirectory / "JavaScript";
             var clientDir = clientRoot / "javascript-client";
 
-            MoveFile(clientDir / "README.md", clientDir / "API_README.md");
-            CopyFile(clientRoot / "README.md", clientDir / "README.md");
-            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+            (clientDir / "README.md").Move(clientDir / "API_README.md");
+            (clientRoot / "README.md").Copy(clientDir / "README.md");
+            (clientRoot / "LICENSE.md").Copy(clientDir / "LICENSE.md");
 
             if (!string.IsNullOrWhiteSpace(NodePublishVersionOverride))
             {
@@ -312,7 +325,7 @@ namespace Dangl.AVACloudClientGenerator
             }
 
             NpmInstall(x => x.SetProcessWorkingDirectory(clientDir));
-            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).SetProcessArgumentConfigurator(a => a.Add("build")));
+            NpmRun(x => x.SetProcessWorkingDirectory(clientDir).AddProcessAdditionalArguments("build"));
 
             Npm("publish --access=public", clientDir);
         });
@@ -337,11 +350,11 @@ namespace Dangl.AVACloudClientGenerator
         clientRoot.CreateOrCleanDirectory();
         clientDir.CreateOrCleanDirectory();
 
-        GenerateClient("Python");
+        GenerateClientsInternal(new[] { "Python" });
 
-        MoveFile(clientDir / "README.md", clientDir / "API_README.md");
-        CopyFile(clientRoot / "README.md", clientDir / "README.md");
-        CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+        (clientDir / "README.md").Move(clientDir / "API_README.md");
+        (clientRoot / "README.md").Copy(clientDir / "README.md");
+        (clientRoot / "LICENSE.md").Copy(clientDir / "LICENSE.md");
 
         var mirrorRepoDir = OutputDirectory / "MirrorRepo";
         Directory.CreateDirectory(mirrorRepoDir);
@@ -368,11 +381,12 @@ namespace Dangl.AVACloudClientGenerator
         files.ForEach(File.Delete);
         // Copy data into cloned repo
         var dirsToCopy = Directory.EnumerateDirectories(clientDir)
+            .Select(d => (AbsolutePath)d)
             .ToList();
         dirsToCopy.ForEach(d =>
         {
             var folderName = Path.GetFileName(d);
-            CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
+            d.CopyToDirectory(mirrorRepoDir / folderName);
         });
         var filesToCopy = Directory.EnumerateFiles(clientDir)
             .ToList();
@@ -432,7 +446,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Php");
+            GenerateClientsInternal(new[] { "Php" });
 
             var composerJsonFile = OutputDirectory.GlobFiles("**/*composer.json").Single();
             var composerJson = composerJsonFile.ReadAllText();
@@ -447,8 +461,8 @@ namespace Dangl.AVACloudClientGenerator
             var clientRoot = OutputDirectory / "Php";
             var clientDir = clientRoot / "php-client" / "Dangl" / "AVACloud";
 
-            CopyFile(clientRoot / "README.md", clientDir / "CLIENT_README.md");
-            CopyFile(clientRoot / "LICENSE.md", clientDir / "LICENSE.md");
+            (clientRoot / "README.md").Copy(clientDir / "CLIENT_README.md");
+            (clientRoot / "LICENSE.md").Copy(clientDir / "LICENSE.md");
 
             var mirrorRepoDir = OutputDirectory / "MirrorRepo";
             Directory.CreateDirectory(mirrorRepoDir);
@@ -474,11 +488,12 @@ namespace Dangl.AVACloudClientGenerator
             files.ForEach(File.Delete);
             // Copy data into cloned repo
             var dirsToCopy = Directory.EnumerateDirectories(clientDir)
+                .Select(d => (AbsolutePath)d)
                 .ToList();
             dirsToCopy.ForEach(d =>
             {
                 var folderName = Path.GetFileName(d);
-                CopyDirectoryRecursively(d, mirrorRepoDir / folderName);
+                d.CopyToDirectory(mirrorRepoDir / folderName);
             });
             var filesToCopy = Directory.EnumerateFiles(clientDir)
                 .ToList();
