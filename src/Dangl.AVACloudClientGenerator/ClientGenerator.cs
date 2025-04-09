@@ -100,7 +100,7 @@ namespace Dangl.AVACloudClientGenerator
         {
             var dartOptionsGenerator = new DartGenerator.OptionsGenerator(_avaCloudVersion);
             var dartGenerator = new DartGenerator.CodeGenerator(dartOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await dartGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri);
+            _zippedClientCodeStream = await dartGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri, _clientGeneratorOptions.OpenApiGeneratorClientGenEndpoint);
         }
 
         private async Task WriteClientCodeAsync(bool shouldAddReadme)

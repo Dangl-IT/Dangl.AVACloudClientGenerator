@@ -23,10 +23,15 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
             _avaCloudVersion = avaCloudVersion;
         }
 
-        public async Task<Stream> GetGeneratedCodeZipPackageAsync(string swaggerDocumentUri)
+        public async Task<Stream> GetGeneratedCodeZipPackageAsync(string swaggerDocumentUri, string swaggerGeneratorClientGenEndpoint)
         {
+            if (string.IsNullOrWhiteSpace(swaggerGeneratorClientGenEndpoint))
+            {
+                throw new Exception($"The {SWAGGER_GENERATOR_LANGUAGE_PARAM} client generator requires a Swagger generator client gen endpoint.");
+            }
+
             var httpClient = new HttpClient();
-            var postRequestMessage = await GetPostRequestMessageAsync(swaggerDocumentUri);
+            var postRequestMessage = await GetPostRequestMessageAsync(swaggerDocumentUri, swaggerGeneratorClientGenEndpoint);
             var generatorResponse = await httpClient.SendAsync(postRequestMessage);
             var jsonResponse = await generatorResponse.Content.ReadAsStringAsync();
             var downloadLink = (string)JObject.Parse(jsonResponse)["link"];
@@ -43,7 +48,7 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
             }
         }
 
-        private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri)
+        private async Task<HttpRequestMessage> GetPostRequestMessageAsync(string swaggerDocumentUri, string swaggerGeneratorClientGenEndpoint)
         {
             var typeScriptNodeClientOptions = await _optionsGenerator.GetDartClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
@@ -58,7 +63,7 @@ namespace Dangl.AVACloudClientGenerator.DartGenerator
             };
             var generatorOptionsJson = JsonConvert.SerializeObject(generatorOptions, camelCaseSerializerSettings);
 
-            var url = Constants.OPENAPI_GENERATOR_CLIENT_GEN_ENDPOINT + SWAGGER_GENERATOR_LANGUAGE_PARAM;
+            var url = swaggerGeneratorClientGenEndpoint + SWAGGER_GENERATOR_LANGUAGE_PARAM;
 
             return new HttpRequestMessage(HttpMethod.Post, url)
             {

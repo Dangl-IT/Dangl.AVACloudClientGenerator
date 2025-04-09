@@ -13,12 +13,13 @@ namespace Dangl.AVACloudClientGenerator
     {
         private DockerClient _cachedClient;
         private string _swaggerGenDockerContainerId;
+        private string _openApiGenDockerContainerId;
 
         public async Task<(int swaggerGenDockerContainerPort, int openApiGenDockerContainerPort)> StartDockerContainersAsync()
         {
             var swaggerGenDockerContainerPort = await StartSwaggerGenDockerContainerAsync();
-            // TODO START OTHER CONTAINERS
-            return (swaggerGenDockerContainerPort, 0);
+            var openApiGenDockerContainerPort = await StartOpenApiGenDockerContainerAsync();
+            return (swaggerGenDockerContainerPort, openApiGenDockerContainerPort);
         }
 
         public async Task StopDockerContainersAsync()
@@ -26,7 +27,8 @@ namespace Dangl.AVACloudClientGenerator
             var dockerClient = GetDockerClient();
             await dockerClient.Containers
                 .StopContainerAsync(_swaggerGenDockerContainerId, new ContainerStopParameters());
-            // TODO OTHER CONTAINERS
+            await dockerClient.Containers
+                .StopContainerAsync(_openApiGenDockerContainerId, new ContainerStopParameters());
         }
 
         private async Task<int> StartSwaggerGenDockerContainerAsync()
@@ -45,6 +47,58 @@ namespace Dangl.AVACloudClientGenerator
             {
                 Name = containerName,
                 Image = "swaggerapi/swagger-generator:latest",
+                Env = new List<string>
+                    {
+                        $"GENERATOR_HOST=http://localhost:{freePort}"
+                    },
+                HostConfig = new HostConfig
+                {
+                    AutoRemove = true,
+                    PortBindings = new Dictionary<string, IList<PortBinding>>
+                        {
+                            {
+                                "8080/tcp",
+                                new PortBinding[]
+                                {
+                                    new PortBinding
+                                    {
+                                        HostPort = freePort.ToString()
+                                    }
+                                }
+                            }
+                        }
+                }
+            };
+
+            var swaggerClientGeneratorDockerContainer = await dockerClient
+                .Containers
+                .CreateContainerAsync(sqlContainerStartParameters);
+
+            await dockerClient
+                .Containers
+                .StartContainerAsync(swaggerClientGeneratorDockerContainer.ID, new ContainerStartParameters());
+
+            await WaitUntilWebserviceIsAvailableAsync(freePort);
+            _swaggerGenDockerContainerId = swaggerClientGeneratorDockerContainer.ID;
+            return freePort;
+        }
+
+        private async Task<int> StartOpenApiGenDockerContainerAsync()
+        {
+            var dockerClient = GetDockerClient();
+            var freePort = GetFreePort();
+
+            // We're pulling the latest Docker image
+            await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
+            {
+                FromImage = "openapitools/openapi-generator-online:latest"
+            }, null, new Progress<JSONMessage>());
+
+            var containerName = "AVACloudClientGen_" + Guid.NewGuid().ToString().Replace("-", string.Empty);
+            var sqlContainerStartParameters = new CreateContainerParameters
+            {
+                Name = containerName,
+                Image = "openapitools/openapi-generator-online:latest",
                 Env = new List<string>
                     {
                         $"GENERATOR_HOST=http://localhost:{freePort}"
