@@ -4,19 +4,24 @@ using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureKeyVault;
+using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static Nuke.Common.Tooling.ProcessTasks;
+using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
@@ -46,6 +51,7 @@ class Build : NukeBuild
     [Parameter] readonly string PhpClientRepositoryTag;
 
     [Parameter] readonly string CustomSwaggerDefinitionUrl;
+    [Parameter] readonly string SwaggerGeneratorContainerName = "AVACloudClientGenerator_SwaggerGenerator";
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
@@ -175,52 +181,58 @@ namespace Dangl.AVACloudClientGenerator
         .Executes(() =>
         {
             var languages = new[]
-            { 
+            {
                 "Java",
                 "TypeScriptNode",
                 // TODO JavaScript client is currently skipped, the generator.swagger.io service always times out
+                // I've notived that when using the local Docker container, CPU usage for the container goes to 100% and
+                // just stays there
                 // "JavaScript",
                 "Php",
                 "Python",
                 "Dart"
             };
 
-            foreach (var language in languages)
-            {
-                GenerateClient(language);
-            }
+            GenerateClientsInternal(languages);
         });
 
-    private void GenerateClient(string language)
+    private void GenerateClientsInternal(string[] languages)
     {
         var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
-        var outputPath = OutputDirectory / language;
+        var outputPath = OutputDirectory;
+        var arguments = $"\"{generatorPath}\" -l {languages.Aggregate((c, n) => c + " " + n)} -o \"{outputPath}\"";
 
-
-        var arguments = $"\"{generatorPath}\" -l {language} -o \"{outputPath}\"";
         if (!string.IsNullOrWhiteSpace(CustomSwaggerDefinitionUrl))
         {
             Serilog.Log.Information("Using custom Swagger definition url: " + CustomSwaggerDefinitionUrl);
             arguments += $" -u {CustomSwaggerDefinitionUrl}";
         }
+        else
+        {
+            Serilog.Log.Information("Using local Docker for client generation");
+            arguments += " -d";
+        }
 
         StartProcess(ToolPathResolver.GetPathExecutable("dotnet"), arguments)
             .AssertZeroExitCode();
 
-        var zipOutputPath = outputPath.ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
-        if (File.Exists(zipOutputPath))
+        foreach (var language in languages)
         {
-            ((AbsolutePath)zipOutputPath).DeleteFile();
-        }
+            var zipOutputPath = (outputPath / language).ToString().TrimEnd('/').TrimEnd('\\') + ".zip";
+            if (File.Exists(zipOutputPath))
+            {
+                ((AbsolutePath)zipOutputPath).DeleteFile();
+            }
 
-        System.IO.Compression.ZipFile.CreateFromDirectory(outputPath, zipOutputPath);
+            System.IO.Compression.ZipFile.CreateFromDirectory(outputPath / language, zipOutputPath);
+        }
     }
 
     Target GenerateAndPublishDartClient => _ => _
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Dart");
+            GenerateClientsInternal(new[] { "Dart" });
 
             var clientRoot = OutputDirectory / "Dart";
 
@@ -261,7 +273,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("TypeScriptNode");
+            GenerateClientsInternal(new[] { "TypeScriptNode" });
 
             var clientRoot = OutputDirectory / "TypeScriptNode";
 
@@ -289,7 +301,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("JavaScript");
+            GenerateClientsInternal(new[] { "JavaScript" });
 
             var clientRoot = OutputDirectory / "JavaScript";
             var clientDir = clientRoot / "javascript-client";
@@ -338,7 +350,7 @@ namespace Dangl.AVACloudClientGenerator
         clientRoot.CreateOrCleanDirectory();
         clientDir.CreateOrCleanDirectory();
 
-        GenerateClient("Python");
+        GenerateClientsInternal(new[] { "Python" });
 
         (clientDir / "README.md").Move(clientDir / "API_README.md");
         (clientRoot / "README.md").Copy(clientDir / "README.md");
@@ -434,7 +446,7 @@ namespace Dangl.AVACloudClientGenerator
         .DependsOn(Compile)
         .Executes(() =>
         {
-            GenerateClient("Php");
+            GenerateClientsInternal(new[] { "Php" });
 
             var composerJsonFile = OutputDirectory.GlobFiles("**/*composer.json").Single();
             var composerJson = composerJsonFile.ReadAllText();
