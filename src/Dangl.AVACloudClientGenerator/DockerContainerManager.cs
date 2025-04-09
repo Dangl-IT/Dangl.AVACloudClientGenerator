@@ -36,11 +36,19 @@ namespace Dangl.AVACloudClientGenerator
             var dockerClient = GetDockerClient();
             var freePort = GetFreePort();
 
+
             // We're pulling the latest Docker image
-            await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
+            try
             {
-                FromImage = "swaggerapi/swagger-generator:latest"
-            }, null, new Progress<JSONMessage>());
+                await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
+                {
+                    FromImage = "swaggerapi/swagger-generator:latest"
+                }, null, new Progress<JSONMessage>());
+            }
+            catch
+            {
+                // I'm not sure why, but the manual pull seemed to fail in some instances - the automatic download then worked, however.
+            }
 
             var containerName = "AVACloudClientGen_" + Guid.NewGuid().ToString().Replace("-", string.Empty);
             var sqlContainerStartParameters = new CreateContainerParameters
