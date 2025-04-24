@@ -2,6 +2,12 @@ name: continuous
 
 on: [push]
 
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+
 jobs:
   generate-clients-windows:
     name: generate-clients-windows
@@ -9,7 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+        with:
+          fetch-depth: 0
+          
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
@@ -27,9 +35,11 @@ jobs:
     name: generate-clients-linux
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
-
+        with:
+          fetch-depth: 0
+          
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
@@ -52,6 +62,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Run './build.cmd Publish'
         run: ./build.cmd Publish
