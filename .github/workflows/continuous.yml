@@ -1,0 +1,71 @@
+name: continuous
+
+on: [push]
+
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  generate-clients-windows:
+    name: generate-clients-windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0'
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Run './build.cmd GenerateClients' (Windows)
+        run: ./build.cmd GenerateClients
+        env:
+          Configuration: Release
+
+  generate-clients-linux:
+    name: generate-clients-linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0'
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Run './build.cmd GenerateClients' (Linux)
+        run: ./build.cmd GenerateClients
+        env:
+          Configuration: Release
+
+  publish-release:
+    name: publish-release
+    runs-on: ubuntu-latest
+    needs:
+      - generate-clients-windows
+      - generate-clients-linux
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run './build.cmd Publish'
+        run: ./build.cmd Publish
+        env:
+          Configuration: Release

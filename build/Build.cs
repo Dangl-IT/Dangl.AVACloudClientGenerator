@@ -9,19 +9,15 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static Nuke.Common.Tooling.ProcessTasks;
-using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
@@ -140,28 +136,13 @@ namespace Dangl.AVACloudClientGenerator
         });
 
     Target Publish => _ => _
-        .DependsOn(GenerateClients)
         .Executes(() =>
         {
-            var publishDir = OutputDirectory / "publish";
-            var zipPath = OutputDirectory / "AVACloud.Client.Generator.zip";
-
-            DotNetPublish(x => x
-                .SetConfiguration(Configuration)
-                .EnableNoRestore()
-                .SetFileVersion(GitVersion.AssemblySemFileVer)
-                .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                .SetInformationalVersion(GitVersion.InformationalVersion)
-                .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
-                .SetOutput(publishDir));
-
-            System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, zipPath);
-
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
             var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
 
-            var artifactPaths = new string[] { zipPath }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
+            var artifactPaths = new string[] { OutputDirectory / "AVACloud.Client.Generator.zip" }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
 
             PublishRelease(x => x
                 .SetArtifactPaths(artifactPaths)
@@ -192,6 +173,22 @@ namespace Dangl.AVACloudClientGenerator
                 "Python",
                 "Dart"
             };
+
+            if (EnvironmentInfo.Platform == PlatformFamily.Windows)
+            {
+                var publishDir = OutputDirectory / "publish";
+
+                DotNetPublish(x => x
+                    .SetConfiguration(Configuration)
+                    .EnableNoRestore()
+                    .SetFileVersion(GitVersion.AssemblySemFileVer)
+                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                    .SetInformationalVersion(GitVersion.InformationalVersion)
+                    .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
+                    .SetOutput(publishDir));
+
+                System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, OutputDirectory / "AVACloud.Client.Generator.zip");
+            }
 
             GenerateClientsInternal(languages);
         });
