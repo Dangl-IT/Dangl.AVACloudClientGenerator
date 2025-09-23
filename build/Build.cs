@@ -157,6 +157,24 @@ namespace Dangl.AVACloudClientGenerator
             .GetResult();
         });
 
+    Target PublishClientGenerator => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var publishDir = OutputDirectory / "publish";
+
+            DotNetPublish(x => x
+                .SetConfiguration(Configuration)
+                .EnableNoRestore()
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion)
+                .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
+                .SetOutput(publishDir));
+
+            System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, OutputDirectory / "AVACloud.Client.Generator.zip");
+        });
+
     Target GenerateClients => _ => _
         .DependsOn(Compile)
         .Executes(() =>
@@ -173,22 +191,6 @@ namespace Dangl.AVACloudClientGenerator
                 "Python",
                 "Dart"
             };
-
-            if (EnvironmentInfo.Platform == PlatformFamily.Windows)
-            {
-                var publishDir = OutputDirectory / "publish";
-
-                DotNetPublish(x => x
-                    .SetConfiguration(Configuration)
-                    .EnableNoRestore()
-                    .SetFileVersion(GitVersion.AssemblySemFileVer)
-                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                    .SetInformationalVersion(GitVersion.InformationalVersion)
-                    .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
-                    .SetOutput(publishDir));
-
-                System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, OutputDirectory / "AVACloud.Client.Generator.zip");
-            }
 
             GenerateClientsInternal(languages);
         });
