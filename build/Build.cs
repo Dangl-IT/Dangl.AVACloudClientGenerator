@@ -3,7 +3,6 @@ using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.AzureKeyVault;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
@@ -27,17 +26,6 @@ class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.GenerateAndPublishPythonClient);
 
-    [AzureKeyVaultConfiguration(
-        BaseUrlParameterName = nameof(KeyVaultBaseUrl),
-        ClientIdParameterName = nameof(KeyVaultClientId),
-        ClientSecretParameterName = nameof(KeyVaultClientSecret),
-        TenantIdParameterName = nameof(KeyVaultTenantId))]
-    readonly AzureKeyVaultConfiguration KeyVaultSettings;
-
-    [Parameter] readonly string KeyVaultBaseUrl;
-    [Parameter] readonly string KeyVaultClientId;
-    [Parameter] readonly string KeyVaultClientSecret;
-    [Parameter] readonly string KeyVaultTenantId;
     [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
@@ -51,7 +39,7 @@ class Build : NukeBuild
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
-    [AzureKeyVaultSecret] readonly string GitHubAuthenticationToken;
+    [Parameter] readonly string GitHubAuthenticationToken;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath OutputDirectory => RootDirectory / "output";

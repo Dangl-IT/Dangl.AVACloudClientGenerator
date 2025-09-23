@@ -83,3 +83,4 @@ jobs:
         run: ./build.cmd Publish
         env:
           Configuration: Release
+          GitHubAuthenticationToken: ${{ secrets.GITHUB_TOKEN }}
