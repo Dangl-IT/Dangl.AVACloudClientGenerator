@@ -3,25 +3,20 @@ using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.AzureKeyVault;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Nuke.GitHub;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static Nuke.Common.Tooling.ProcessTasks;
-using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.Npm.NpmTasks;
@@ -31,17 +26,6 @@ class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.GenerateAndPublishPythonClient);
 
-    [AzureKeyVaultConfiguration(
-        BaseUrlParameterName = nameof(KeyVaultBaseUrl),
-        ClientIdParameterName = nameof(KeyVaultClientId),
-        ClientSecretParameterName = nameof(KeyVaultClientSecret),
-        TenantIdParameterName = nameof(KeyVaultTenantId))]
-    readonly AzureKeyVaultConfiguration KeyVaultSettings;
-
-    [Parameter] readonly string KeyVaultBaseUrl;
-    [Parameter] readonly string KeyVaultClientId;
-    [Parameter] readonly string KeyVaultClientSecret;
-    [Parameter] readonly string KeyVaultTenantId;
     [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
@@ -55,7 +39,7 @@ class Build : NukeBuild
 
     [Parameter] readonly string Configuration = IsLocalBuild ? "Debug" : "Release";
 
-    [AzureKeyVaultSecret] readonly string GitHubAuthenticationToken;
+    [Parameter] readonly string GitHubAuthenticationToken;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath OutputDirectory => RootDirectory / "output";
@@ -140,28 +124,13 @@ namespace Dangl.AVACloudClientGenerator
         });
 
     Target Publish => _ => _
-        .DependsOn(GenerateClients)
         .Executes(() =>
         {
-            var publishDir = OutputDirectory / "publish";
-            var zipPath = OutputDirectory / "AVACloud.Client.Generator.zip";
-
-            DotNetPublish(x => x
-                .SetConfiguration(Configuration)
-                .EnableNoRestore()
-                .SetFileVersion(GitVersion.AssemblySemFileVer)
-                .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                .SetInformationalVersion(GitVersion.InformationalVersion)
-                .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
-                .SetOutput(publishDir));
-
-            System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, zipPath);
-
             var repositoryInfo = GetGitHubRepositoryInfo(GitRepository);
 
             var isPrerelease = !(GitVersion.BranchName.Equals("master") || GitVersion.BranchName.Equals("origin/master"));
 
-            var artifactPaths = new string[] { zipPath }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
+            var artifactPaths = new string[] { OutputDirectory / "AVACloud.Client.Generator.zip" }.Concat(OutputDirectory.GlobFiles("*.zip").Select(f => f.ToString())).Distinct().ToArray();
 
             PublishRelease(x => x
                 .SetArtifactPaths(artifactPaths)
@@ -174,6 +143,24 @@ namespace Dangl.AVACloudClientGenerator
             .ConfigureAwait(false)
             .GetAwaiter()
             .GetResult();
+        });
+
+    Target PublishClientGenerator => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var publishDir = OutputDirectory / "publish";
+
+            DotNetPublish(x => x
+                .SetConfiguration(Configuration)
+                .EnableNoRestore()
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion)
+                .SetProject(SourceDirectory / "Dangl.AVACloudClientGenerator" / "Dangl.AVACloudClientGenerator.csproj")
+                .SetOutput(publishDir));
+
+            System.IO.Compression.ZipFile.CreateFromDirectory(publishDir, OutputDirectory / "AVACloud.Client.Generator.zip");
         });
 
     Target GenerateClients => _ => _
