@@ -480,7 +480,7 @@ namespace Dangl.AVACloudClientGenerator
             dirsToCopy.ForEach(d =>
             {
                 var folderName = Path.GetFileName(d);
-                d.CopyToDirectory(mirrorRepoDir / folderName);
+                d.CopyToDirectory(mirrorRepoDir);
             });
             var filesToCopy = Directory.EnumerateFiles(clientDir)
                 .ToList();
