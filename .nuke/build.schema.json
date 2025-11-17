@@ -122,18 +122,6 @@
         "GitHubAuthenticationToken": {
           "type": "string"
         },
-        "KeyVaultBaseUrl": {
-          "type": "string"
-        },
-        "KeyVaultClientId": {
-          "type": "string"
-        },
-        "KeyVaultClientSecret": {
-          "type": "string"
-        },
-        "KeyVaultTenantId": {
-          "type": "string"
-        },
         "NodePublishVersionOverride": {
           "type": "string"
         },
