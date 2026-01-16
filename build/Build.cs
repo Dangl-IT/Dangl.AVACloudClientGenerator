@@ -185,7 +185,7 @@ namespace Dangl.AVACloudClientGenerator
 
     private void GenerateClientsInternal(string[] languages)
     {
-        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net9.0" / "Dangl.AVACloudClientGenerator.dll";
+        var generatorPath = SourceDirectory / "Dangl.AVACloudClientGenerator" / "bin" / Configuration / "net10.0" / "Dangl.AVACloudClientGenerator.dll";
         var outputPath = OutputDirectory;
         var arguments = $"\"{generatorPath}\" -l {languages.Aggregate((c, n) => c + " " + n)} -o \"{outputPath}\"";
 
