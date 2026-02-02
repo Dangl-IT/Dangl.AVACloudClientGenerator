@@ -34,6 +34,7 @@
         "GenerateClients",
         "GenerateVersion",
         "Publish",
+        "PublishClientGenerator",
         "Restore",
         "Test"
       ]
@@ -121,19 +122,10 @@
         "GitHubAuthenticationToken": {
           "type": "string"
         },
-        "KeyVaultBaseUrl": {
-          "type": "string"
-        },
-        "KeyVaultClientId": {
-          "type": "string"
-        },
-        "KeyVaultClientSecret": {
-          "type": "string"
-        },
-        "KeyVaultTenantId": {
-          "type": "string"
-        },
         "NodePublishVersionOverride": {
+          "type": "string"
+        },
+        "NpmAccessToken": {
           "type": "string"
         },
         "PhpClientRepositoryTag": {

@@ -45,7 +45,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                     {
                         using (var entryStream = entry.Open())
                         {
-                            using (var correctedStream = await UpdateFileLoadMethodAsync(entryStream))
+                            using (var correctedStream = await UpdateFileLoadMethodAndNullableConstructorAsyncAsync(entryStream))
                             {
                                 entry.Delete();
                                 var updateEntry = archive.CreateEntry(entry.FullName);
@@ -106,14 +106,16 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             }
         }
 
-        private async Task<Stream> UpdateFileLoadMethodAsync(Stream fileStream)
+        private async Task<Stream> UpdateFileLoadMethodAndNullableConstructorAsyncAsync(Stream fileStream)
         {
             using (var streamReader = new StreamReader(fileStream))
             {
                 var fileContent = await streamReader.ReadToEndAsync();
 
                 fileContent = fileContent
-                    .Replace("\\GuzzleHttp\\Psr7\\try_fopen", "\\GuzzleHttp\\Psr7\\Utils::tryFopen");
+                    .Replace("\\GuzzleHttp\\Psr7\\try_fopen", "\\GuzzleHttp\\Psr7\\Utils::tryFopen")
+                    .Replace("__construct(array $data = null)", "__construct(?array $data = null)")
+                    ;
 
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))

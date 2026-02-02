@@ -6,11 +6,11 @@ namespace Dangl.AVACloudClientGenerator
     [System.CodeDom.Compiler.GeneratedCode("GitVersionBuild", "")]
     public static class VersionsService
     {
-        public static string Version => "0.3.0";
-        public static string CommitInfo => "Branch.master.Sha.d9ba1b0de179c44a82d66a83177c76f1a96f8c2a";
-        public static string CommitDate => "2024-06-28";
-        public static string CommitHash => "d9ba1b0de179c44a82d66a83177c76f1a96f8c2a";
-        public static string InformationalVersion => "0.3.0+Branch.master.Sha.d9ba1b0de179c44a82d66a83177c76f1a96f8c2a";
-        public static DateTime BuildDateUtc { get; } = new DateTime(2024, 7, 1, 8, 56, 16, DateTimeKind.Utc);
+        public static string Version => "0.3.5-fix-artifact-gen0005";
+        public static string CommitInfo => "Branch.fix-artifact-generation.Sha.2218fe282cc09d2b49d1e2d8fb5ec94574fdcbe0";
+        public static string CommitDate => "2025-09-23";
+        public static string CommitHash => "2218fe282cc09d2b49d1e2d8fb5ec94574fdcbe0";
+        public static string InformationalVersion => "0.3.5-fix-artifact-generation.5+Branch.fix-artifact-generation.Sha.2218fe282cc09d2b49d1e2d8fb5ec94574fdcbe0";
+        public static DateTime BuildDateUtc { get; } = new DateTime(2025, 9, 23, 8, 4, 53, DateTimeKind.Utc);
     }
 }
