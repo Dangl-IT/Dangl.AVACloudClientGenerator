@@ -125,6 +125,9 @@
         "NodePublishVersionOverride": {
           "type": "string"
         },
+        "NpmAccessToken": {
+          "type": "string"
+        },
         "PhpClientRepositoryTag": {
           "type": "string"
         },

@@ -29,6 +29,7 @@ class Build : NukeBuild
     [GitVersion(Framework = "netcoreapp3.1")] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
 
+    [Parameter] readonly string NpmAccessToken;
     [Parameter] readonly string NodePublishVersionOverride;
     [Parameter] readonly string DartPublishVersionOverride;
     [Parameter] readonly string PythonClientRepositoryTag;
@@ -257,6 +258,7 @@ namespace Dangl.AVACloudClientGenerator
         });
 
     Target GenerateAndPublishTypeScriptNpmClient => _ => _
+        .Requires(() => NpmAccessToken)
         .DependsOn(Compile)
         .Executes(() =>
         {
@@ -281,7 +283,19 @@ namespace Dangl.AVACloudClientGenerator
             NpmInstall(x => x.SetProcessWorkingDirectory(clientRoot));
             NpmRun(x => x.SetProcessWorkingDirectory(clientRoot).AddProcessAdditionalArguments("build"));
 
-            Npm("publish --access=public", clientRoot);
+            (clientRoot / ".npmrc").WriteAllText($@"
+registry=https://registry.npmjs.org/
+always-auth=true
+//registry.npmjs.org/:_authToken={NpmAccessToken}
+");
+            try
+            {
+                Npm("publish --access=public", clientRoot);
+            }
+            finally
+            {
+                (clientRoot / ".npmrc").DeleteFile();
+            }
         });
 
     Target GenerateAndPublishJavaScriptNpmClient => _ => _
