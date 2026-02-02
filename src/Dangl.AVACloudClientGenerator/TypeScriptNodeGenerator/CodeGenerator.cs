@@ -254,7 +254,7 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
             // 7. There are also other calls to `toJSON` that are not in array mapping methods
             lines = Regex.Split(code, @"\r\n?|\n");
             updatedCode = string.Empty;
-            var toJsonRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\] = this\.([a-zA-Z0-9]+) \? this.([a-zA-Z0-9]+)\.toJSON\(\) : <any>undefined;");
+            var toJsonRegex = new Regex(@"(\s*)data\[""([a-zA-Z0-9]+)""\] = this\.([a-zA-Z0-9]+) \? this.([a-zA-Z0-9]+)\.toJSON\(\) : (<any>)?undefined( as any)?;");
             foreach (var line in lines)
             {
                 var match = toJsonRegex.Match(line);
@@ -317,6 +317,37 @@ namespace Dangl.AVACloudClientGenerator.TypeScriptNodeGenerator
                     updatedCode += line + Environment.NewLine;
                 }
             }
+            code = updatedCode;
+
+
+            
+            // 9. There was also a problem since we've marked the toJSON method optional, we had to
+            // check if it exists 
+            lines = Regex.Split(code, @"\r\n?|\n");
+            updatedCode = string.Empty;
+            var toJsonMappingRegex = new Regex(@"([a-zA-Z0-9]+) \? ([a-zA-Z0-9]+)\.toJSON\(\) : undefined as any");
+            var toJsonMappingRegexWithThis = new Regex(@"this\.([a-zA-Z0-9]+) \? this\.([a-zA-Z0-9]+)\.toJSON\(\) : undefined as any");
+            foreach (var line in lines)
+            {
+                var match = toJsonMappingRegex.Match(line);
+                var matchWithThis = toJsonMappingRegexWithThis.Match(line);
+                if (match.Success)
+                {
+                    var updatedLine = line.Replace($"{match.Groups[1].Value} ? {match.Groups[1].Value}.toJSON() : undefined", $"({match.Groups[1].Value} && {match.Groups[1].Value}.toJSON) ? {match.Groups[1].Value}.toJSON() : {match.Groups[1].Value}");
+                    updatedCode += updatedLine + Environment.NewLine;
+                }
+                else if (matchWithThis.Success)
+                {
+                    var updatedLine = line.Replace($"this.{matchWithThis.Groups[1].Value} ? this.{matchWithThis.Groups[1].Value}.toJSON() : undefined", $"(this.{matchWithThis.Groups[1].Value} && this.{matchWithThis.Groups[1].Value}.toJSON) ? this.{matchWithThis.Groups[1].Value}.toJSON() : this.{matchWithThis.Groups[1].Value}");
+                    updatedCode += updatedLine + Environment.NewLine;
+
+                }
+                else
+                {
+                    updatedCode += line + Environment.NewLine;
+                }
+            }
+
             code = updatedCode;
 
             return code;
