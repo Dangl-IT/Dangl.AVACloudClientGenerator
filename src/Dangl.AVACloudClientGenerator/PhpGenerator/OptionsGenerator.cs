@@ -23,6 +23,10 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 { "invokerPackage", "Dangl\\AVACloud" },
                 { "modelPackage", "Model" },
                 { "apiPackage", "Api" },
+                { "prependFormOrBodyParameters", "true" },
+                { "variableNamingConvention", "camelCase" },
+                { "developerOrganization", "Dangl IT GmbH" },
+                { "developerOrganizationUrl", "https://www.dangl-it.com" },
             };
         }
     }
