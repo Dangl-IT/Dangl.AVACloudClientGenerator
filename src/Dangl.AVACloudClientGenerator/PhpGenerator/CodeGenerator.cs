@@ -57,7 +57,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             var phpClientOptions = await _optionsGenerator.GetPhpClientGeneratorOptionsAsync(swaggerDocumentUri);
             var generatorOptions = new
             {
-                swaggerUrl = swaggerDocumentUri,
+                openAPIUrl = swaggerDocumentUri,
                 options = phpClientOptions
             };
 

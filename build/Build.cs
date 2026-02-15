@@ -460,7 +460,7 @@ always-auth=true
 
 
             var clientRoot = OutputDirectory / "Php";
-            var clientDir = clientRoot / "php-client" / "Dangl" / "AVACloud";
+            var clientDir = clientRoot / "php-client";
 
             (clientRoot / "README.md").Copy(clientDir / "CLIENT_README.md");
             (clientRoot / "LICENSE.md").Copy(clientDir / "LICENSE.md");

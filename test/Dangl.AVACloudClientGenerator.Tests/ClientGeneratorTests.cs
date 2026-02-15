@@ -75,7 +75,7 @@ namespace Dangl.AVACloudClientGenerator.Tests
                 {
                     var phpOptionsGenerator = new AVACloudClientGenerator.PhpGenerator.OptionsGenerator(_avaCloudVersion);
                     var phpGenerator = new AVACloudClientGenerator.PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-                    using (var zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, DockerTestHelper.GetSwaggerDockerUrl()))
+                    using (var zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, DockerTestHelper.GetOpenApiDockerUrl()))
                     {
                         Assert.NotNull(zippedClientCodeStream);
                         Assert.True(zippedClientCodeStream.Length > 0);

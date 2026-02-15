@@ -49,7 +49,7 @@ namespace Dangl.AVACloudClientGenerator.Tests.PhpGenerator
         {
             var phpOptionsGenerator = new OptionsGenerator(_avaCloudVersion);
             var phpGenerator = new CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, DockerTestHelper.GetSwaggerDockerUrl());
+            return await phpGenerator.GetGeneratedCodeZipPackageAsync(Constants.COMPLETE_SWAGGER_DEFINITION_ENDPOINT, DockerTestHelper.GetOpenApiDockerUrl());
         }
 
         private string GetFileContentForArchive(Stream archiveStream, string entryName)

@@ -87,7 +87,7 @@ namespace Dangl.AVACloudClientGenerator
         {
             var phpOptionsGenerator = new PhpGenerator.OptionsGenerator(_avaCloudVersion);
             var phpGenerator = new PhpGenerator.CodeGenerator(phpOptionsGenerator, _avaCloudVersion);
-            _zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri, _clientGeneratorOptions.SwaggerGeneratorClientGenEndpoint);
+            _zippedClientCodeStream = await phpGenerator.GetGeneratedCodeZipPackageAsync(swaggerDocumentUri, _clientGeneratorOptions.OpenApiGeneratorClientGenEndpoint);
         }
 
         private async Task GeneratePythonClient(string swaggerDocumentUri)

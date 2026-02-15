@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Dangl.AVACloudClientGenerator.PhpGenerator
 {
@@ -68,9 +69,13 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             using (var streamReader = new StreamReader(fileStream))
             {
                 var composerJsonText = await streamReader.ReadToEndAsync();
+                composerJsonText = composerJsonText
+                    .Replace("Dangl\\AVACloud/", "Dangl\\\\AVACloud/")
+                    .Replace("OpenAPI\\\\Client", "Dangl\\\\AVACloud");
                 var jObject = JObject.Parse(composerJsonText);
 
-                jObject["require-dev"]["friendsofphp/php-cs-fixer"] = "~2.6";
+                jObject["name"] = "dangl/avacloud";
+                jObject["license"] = "proprietary";
                 jObject["homepage"] = "https://www.dangl-it.com";
                 var authors = jObject["authors"] as JArray;
                 authors.Clear();
@@ -85,15 +90,6 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
                 keywords.Add("ava");
                 keywords.Add("dangl");
                 keywords.Add("bim");
-
-                // We're going with v7 of guzzle
-                if (jObject["require"]["guzzlehttp/guzzle"].ToString() != "^6.2")
-                {
-                    throw new Exception("The client generator tried to update guzzle. However, a newer version was already encountered" +
-                        "in the package. The client generator needs to be manually checked and updated to be able to generate a PHP client again");
-                }
-
-                jObject["require"]["guzzlehttp/guzzle"] = "^7.4.4";
 
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
@@ -112,11 +108,6 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             {
                 var fileContent = await streamReader.ReadToEndAsync();
 
-                fileContent = fileContent
-                    .Replace("\\GuzzleHttp\\Psr7\\try_fopen", "\\GuzzleHttp\\Psr7\\Utils::tryFopen")
-                    .Replace("__construct(array $data = null)", "__construct(?array $data = null)")
-                    ;
-
                 var memStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memStream, new UTF8Encoding(false), 2048, true))
                 {
@@ -134,7 +125,7 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             memStream.Position = 0;
             using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, true))
             {
-                var readmeEntry = archive.Entries.Single(e => e.FullName.EndsWith("AVACloud/README.md"));
+                var readmeEntry = archive.Entries.Single(e => e.FullName.EndsWith("README.md"));
                 using (var entryStream = readmeEntry.Open())
                 {
                     using (var correctedStream = await UpdateReadmeAsync(entryStream))
@@ -159,17 +150,19 @@ namespace Dangl.AVACloudClientGenerator.PhpGenerator
             {
                 var readmeText = await streamReader.ReadToEndAsync();
                 readmeText = Regex.Replace(readmeText, "\r\n?|\n", "\r\n");
-                if (!readmeText.Contains("https://github.com/dangl/avacloud.git"))
+                if (!readmeText.Contains("\"type\": \"vcs\""))
                 {
-                    throw new Exception("Did not find the expected string to be replaced in the README.md: https://github.com/dangl/avacloud.git");
+                    throw new Exception("Did not find the expected string to be replaced in the README.md: \"type\": \"vcs\"");
                 }
-                readmeText = readmeText.Replace("https://github.com/dangl/avacloud.git", "https://github.com/Dangl-IT/avacloud-client-php.git");
+                readmeText = readmeText.Replace("\"type\": \"vcs\"", "\"type\": \"git\"");
+                readmeText = readmeText.Replace("\"url\": \"https:////.git\"", "\"url\": \"https://github.com/Dangl-IT/avacloud-client-php.git\"");
+                readmeText = readmeText.Replace("\"/\": \"*@dev\"", "\"dangl/avacloud\": \"*@dev\"");
 
-                if (!readmeText.Contains("# Dangl\\AVACloud\r\n"))
+                if (!readmeText.Contains("# dangl/avacloud\r\n"))
                 {
-                    throw new Exception("Did not find the expected string to be replaced in the README.md: # Dangl\\AVACloud (with a CRLF line ending)");
+                    throw new Exception("Did not find the expected string to be replaced in the README.md: # dangl/avacloud (with a CRLF line ending)");
                 }
-                readmeText = readmeText.Replace("# Dangl\\AVACloud\r\n", "# Dangl\\AVACloud\r\n" +
+                readmeText = readmeText.Replace("# dangl/avacloud\r\n", "# Dangl\\AVACloud\r\n" +
                     "Please see the offical site for more information and further documentation: [https://www.dangl-it.com/products/avacloud-gaeb-saas/](https://www.dangl-it.com/products/avacloud-gaeb-saas/)  \r\n" +
                     "To get started, you can use the PHP demo application: [https://github.com/Dangl-IT/avacloud-demo-php](https://github.com/Dangl-IT/avacloud-demo-php)\r\n\r\n");
 
